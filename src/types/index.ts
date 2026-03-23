@@ -9,7 +9,7 @@ export interface StickyNote {
   id: string;
   title: string;
   content: string; // Markdown形式
-  quadrant: QuadrantId;
+  // quadrant: QuadrantId;
   category: Category;
   position: { x: number; y: number }; // ボード内での絶対座標(px)または比率(%)
   authorName?: string;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { useStore } from '../../store/useStore';
 import { type Category, type QuadrantId } from '../../types/index';
 
@@ -8,12 +9,12 @@ export const AddNoteForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<Category>('house');
-  const [quadrant, setQuadrant] = useState<QuadrantId>('can');
+  // const [quadrant, setQuadrant] = useState<QuadrantId>('can');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    addNote(title, content, category, quadrant);
+    addNote(title, content, category);
     setTitle('');
     setContent('');
     setIsOpen(false); // 送信後に閉じる
@@ -49,8 +50,9 @@ export const AddNoteForm = () => {
           <option value="food">🍱 食生活</option>
           <option value="health">💪 体力づくり</option>
           <option value="medical">💊 医療・健康</option>
+          <option value="social">🧑‍🤝‍🧑 社会活動</option>
         </select>
-        <select
+        {/* <select
           className="w-full border p-2 rounded text-sm bg-white"
           value={quadrant}
           onChange={(e) => setQuadrant(e.target.value as QuadrantId)}
@@ -59,7 +61,7 @@ export const AddNoteForm = () => {
           <option value="cannot">できない</option>
           <option value="risk">危険が伴う</option>
           <option value="request">任せたい</option>
-        </select>
+        </select> */}
         <textarea
           placeholder="詳細（Markdown形式で追記可能）"
           className="w-full border p-2 rounded text-sm h-24 focus:ring-2 focus:ring-blue-500 outline-none"
