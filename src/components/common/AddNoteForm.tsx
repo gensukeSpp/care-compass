@@ -9,12 +9,12 @@ export const AddNoteForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<Category>('house');
-  // const [quadrant, setQuadrant] = useState<QuadrantId>('can');
+  const [quadrant, setQuadrant] = useState<QuadrantId>('can');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    addNote(title, content, category);
+    addNote(title, content, category, quadrant);
     setTitle('');
     setContent('');
     setIsOpen(false); // 送信後に閉じる
@@ -52,16 +52,17 @@ export const AddNoteForm = () => {
           <option value="medical">💊 医療・健康</option>
           <option value="social">🧑‍🤝‍🧑 社会活動</option>
         </select>
-        {/* <select
+        <select
           className="w-full border p-2 rounded text-sm bg-white"
           value={quadrant}
           onChange={(e) => setQuadrant(e.target.value as QuadrantId)}
         >
-          <option value="can">できる</option>
+          <option value="neutral"></option>
+          {/* <option value="can">できる</option>
           <option value="cannot">できない</option>
           <option value="risk">危険が伴う</option>
-          <option value="request">任せたい</option>
-        </select> */}
+          <option value="request">任せたい</option> */}
+        </select>
         <textarea
           placeholder="詳細（Markdown形式で追記可能）"
           className="w-full border p-2 rounded text-sm h-24 focus:ring-2 focus:ring-blue-500 outline-none"

@@ -69,6 +69,7 @@ export const NoteModal = () => {
                 <option value="food">🍱 食生活</option>
                 <option value="health">💪 体力づくり</option>
                 <option value="medical">💊 医療・健康</option>
+                <option value="social">🧑‍🤝‍🧑 社会活動</option>
               </select>
               <textarea
                 className="w-full border p-4 rounded-lg h-64 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"

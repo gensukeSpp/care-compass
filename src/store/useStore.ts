@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { Category, Note } from '../types/index';
+import type { Category, QuadrantId, Note } from '../types/index';
 import { INITIAL_NOTE } from './initialData';
 
 interface BoardState {
@@ -11,17 +11,18 @@ interface BoardState {
 	selectNote: (id: string | null) => void; // 追加
 	updateNotePosition: (id: string, x: number, y: number) => void;
 	updateNoteContent: (id: string, content: string) => void; // 追記用
-	addNote: (title: string, content: string, category: Category) => void;
+	addNote: (title: string, content: string, category: Category, status: QuadrantId) => void;
 	updateNote: (id: string, updates: Partial<Note>) => void;
 	deleteNote: (id: string) => void;
 }
 
-function createNote(title: string, content: string, category: Category): Note {
+function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
 	return {
 		id: uuidv4(),
 		title,
 		content,
 		category,
+		status,
 		x: 20, // 象限内の初期位置
 		y: 20,
 		updatedAt: new Date().toISOString(),
@@ -45,7 +46,7 @@ export const useStore = create<BoardState>()(
 				set((state) => ({
 					notes: [
 						...state.notes,
-						createNote(title, content, category)
+						createNote(title, content, category, 'neutral')
 					],
 				})),
 			updateNote: (id, updates) =>
