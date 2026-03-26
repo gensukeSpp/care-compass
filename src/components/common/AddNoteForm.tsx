@@ -57,11 +57,11 @@ export const AddNoteForm = () => {
           value={quadrant}
           onChange={(e) => setQuadrant(e.target.value as QuadrantId)}
         >
-          <option value="neutral"></option>
-          {/* <option value="can">できる</option>
+          <option value="can">できる</option>
           <option value="cannot">できない</option>
-          <option value="risk">危険が伴う</option>
-          <option value="request">任せたい</option> */}
+          <option value="risk">危険を伴う</option>
+          <option value="request">頼みたい</option>
+          <option value="neutral">保留</option>
         </select>
         <textarea
           placeholder="詳細（Markdown形式で追記可能）"
