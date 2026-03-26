@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { useStore } from '../../store/useStore';
 import { type Category, type QuadrantId } from '../../types/index';
 
@@ -49,16 +50,18 @@ export const AddNoteForm = () => {
           <option value="food">🍱 食生活</option>
           <option value="health">💪 体力づくり</option>
           <option value="medical">💊 医療・健康</option>
+          <option value="social">🧑‍🤝‍🧑 社会活動</option>
         </select>
         <select
           className="w-full border p-2 rounded text-sm bg-white"
           value={quadrant}
           onChange={(e) => setQuadrant(e.target.value as QuadrantId)}
         >
-          <option value="can">できる</option>
+          <option value="neutral"></option>
+          {/* <option value="can">できる</option>
           <option value="cannot">できない</option>
           <option value="risk">危険が伴う</option>
-          <option value="request">任せたい</option>
+          <option value="request">任せたい</option> */}
         </select>
         <textarea
           placeholder="詳細（Markdown形式で追記可能）"

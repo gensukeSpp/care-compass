@@ -25,9 +25,9 @@ function App() {
         {/* 4分割の十字線（見た目だけ） */}
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
           <div className="border-r border-b border-gray-300 p-4 text-gray-400">できる</div>
-          <div className="border-b border-gray-300 p-4 text-gray-400">頼みたい</div>
-          <div className="border-r border-gray-300 p-4 text-gray-400">危険</div>
-          <div className="p-4 text-gray-400">できない</div>
+          <div className="border-b border-gray-300 p-4 text-gray-400">できない</div>
+          <div className="border-r border-gray-300 p-4 text-gray-400">危険を伴う</div>
+          <div className="p-4 text-gray-400">頼みたい</div>
         </div>
         <DndContext onDragEnd={handleDragEnd}>
           {notes.map((note) => (
