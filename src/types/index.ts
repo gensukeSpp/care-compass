@@ -15,3 +15,14 @@ export interface StickyNote {
   authorName?: string;
   updatedAt: string;
 }
+
+export interface Note {
+  id: string;
+  title: string;
+  category: Category;
+  // quadrant: QuadrantId;
+  content: string; // Markdown形式
+  updatedAt?: string;
+  x: number;
+  y: number;
+}
