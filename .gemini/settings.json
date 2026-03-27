@@ -4,5 +4,8 @@
       "GEMINI.md",
       "設計書.md"
     ]
+  },
+  "general": {
+    "preferredEditor": "vscode"
   }
 }

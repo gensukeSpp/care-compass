@@ -70,4 +70,4 @@ src/
 - `bun run dev`: Start dev server
 - `bun run build`: Build for production
 - `bun run lint`: Linting
-- `bun vitest`: Run tests
+- `bun run test`: Run tests
