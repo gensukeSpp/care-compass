@@ -32,10 +32,10 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] Basic 4-quadrant UI layout.
 - [x] Sticky note rendering with color coding.
 - [x] Basic Drag & Drop (dnd-kit).
-- [ ] **Refactor Data Types:** Align `StickyNote` type with `設計書.md` (Add `status`, unify `Note` types).
-- [ ] **Coordinate Normalization:** Implement percentage-based positioning for responsiveness.
-- [ ] **Note Modal:** Full Markdown rendering and basic edit functionality.
-- [ ] **Category Mapping:** Ensure icons and colors match the 5 categories in `設計書.md`.
+- [x] **Refactor Data Types:** Align `StickyNote` type with `設計書.md` (Add `status`, unify `Note` types).
+- [x] **Coordinate Normalization:** Implement percentage-based positioning for responsiveness.
+- [x] **Note Modal:** Full Markdown rendering and basic edit functionality.
+- [x] **Category Mapping:** Ensure icons and colors match the 5 categories in `設計書.md`.
 
 ### Phase 2: Enhanced UI & Features
 - [ ] **Google Keep Drawer:** Implementation of a "Pending Box" drawer for notes from Google Keep/Markdown paste.
@@ -70,4 +70,4 @@ src/
 - `bun run dev`: Start dev server
 - `bun run build`: Build for production
 - `bun run lint`: Linting
-- `bun vitest`: Run tests
+- `bun run test`: Run tests

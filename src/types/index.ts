@@ -4,17 +4,7 @@ export type QuadrantId = 'neutral' | 'can' | 'cannot' | 'risk' | 'request';
 // カテゴリ（色分け用）
 export type Category = 'house' | 'food' | 'health' | 'medical' | 'social';
 
-// 付箋の型定義
-export interface StickyNote {
-  id: string;
-  title: string;
-  content: string; // Markdown形式
-  category: Category;
-  position: { x: number; y: number }; // ボード内での絶対座標(px)または比率(%)
-  authorName?: string;
-  updatedAt: string;
-}
-
+// 付箋の型定義 (Unified)
 export interface Note {
   id: string;
   title: string;
@@ -22,6 +12,8 @@ export interface Note {
   status: QuadrantId;
   content: string; // Markdown形式
   updatedAt?: string;
+  authorName?: string;
+  // Position as percentages (0-100)
   x: number;
   y: number;
 }

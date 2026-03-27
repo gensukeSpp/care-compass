@@ -7,24 +7,42 @@ import { INITIAL_NOTE } from './initialData';
 
 interface BoardState {
 	notes: Note[];
-	selectedNoteId: string | null; // 追加
-	selectNote: (id: string | null) => void; // 追加
+	selectedNoteId: string | null;
+	containerDimensions: { width: number; height: number }; // 追加
+	selectNote: (id: string | null) => void;
 	updateNotePosition: (id: string, x: number, y: number) => void;
-	updateNoteContent: (id: string, content: string) => void; // 追記用
+	updateNoteContent: (id: string, content: string) => void;
 	addNote: (title: string, content: string, category: Category, status: QuadrantId) => void;
 	updateNote: (id: string, updates: Partial<Note>) => void;
 	deleteNote: (id: string) => void;
+	setContainerDimensions: (width: number, height: number) => void; // 追加
 }
 
 function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
+	let x = 5;
+	let y = 5;
+
+	switch (status) {
+		case 'can':
+			x = 5; y = 5; break;
+		case 'cannot':
+			x = 55; y = 5; break;
+		case 'risk':
+			x = 5; y = 55; break;
+		case 'request':
+			x = 55; y = 55; break;
+		default:
+			x = 40; y = 40; // central area for neutral
+	}
+
 	return {
 		id: uuidv4(),
 		title,
 		content,
 		category,
 		status,
-		x: 20, // 象限内の初期位置
-		y: 20,
+		x,
+		y,
 		updatedAt: new Date().toISOString(),
 	};
 }
@@ -33,20 +51,23 @@ export const useStore = create<BoardState>()(
 		(set) => ({
 			notes: INITIAL_NOTE,
 			selectedNoteId: null,
+			containerDimensions: { width: 1024, height: 768 }, // デフォルト値
 			selectNote: (id) => set({ selectedNoteId: id }),
 			updateNotePosition: (id, x, y) =>
 				set((state) => ({
 					notes: state.notes.map((n) => (n.id === id ? { ...n, x, y } : n)),
 				})),
+			setContainerDimensions: (width, height) =>
+				set({ containerDimensions: { width, height } }),
 			updateNoteContent: (id, content) =>
 				set((state) => ({
 					notes: state.notes.map((n) => (n.id === id ? { ...n, content } : n))
 				})),
-			addNote: (title, content, category) =>
+			addNote: (title, content, category, status) =>
 				set((state) => ({
 					notes: [
 						...state.notes,
-						createNote(title, content, category, 'neutral')
+						createNote(title, content, category, status)
 					],
 				})),
 			updateNote: (id, updates) =>

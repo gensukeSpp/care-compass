@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
-
 import { useDraggable } from '@dnd-kit/core';
 
 import { useStore } from '../../store/useStore';
 import { type Category } from '../../types/index';
+import { percentageToPixels } from '../../utils/positionUtils';
 
 const categoryColors: Record<Category, string> = {
 	house: 'bg-blue-100 border-blue-300',
@@ -15,60 +14,38 @@ const categoryColors: Record<Category, string> = {
 
 export const StickyNote = ({ id, title, x, y, category }: { id: string, title: string, x: number, y: number, category: Category }) => {
 	const selectNote = useStore((state) => state.selectNote);
-	// const [isDragging, setIsDragging] = useState(false);
+	const containerDimensions = useStore((state) => state.containerDimensions);
 	const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
+
+	// %座標をpxに変換
+	const pxX = percentageToPixels(x, containerDimensions.width);
+	const pxY = percentageToPixels(y, containerDimensions.height);
 
 	// ドラッグ中の位置計算
 	const style = {
 		transform: transform
-			? `translate3d(${transform.x + x}px, ${transform.y + y}px, 0)`
-			: `translate3d(${x}px, ${y}px, 0)`,
+			? `translate3d(${transform.x + pxX}px, ${transform.y + pxY}px, 0)`
+			: `translate3d(${pxX}px, ${pxY}px, 0)`,
 		position: 'absolute' as const,
 	};
 
-	// 🙅isDragging と transform の状態タイミングズレ
-	// const isDrag = Boolean(transform);
 	const handlePointerUp = (e: React.PointerEvent) => {
 		console.log(`pointer-event: ${e.currentTarget}`);
 		// ドラッグとクリックを判別するため、微細な移動ならクリックとみなす
 		/**
-		 * 🙅簡易的にはそのまま onClick でも動きますが、dnd-kit の listeners と干渉しないよう調整
 		 - listeners によって pointerdown → pointermove の変位を検出してドラッグ開始
 		 - pointerup でドラッグ終了
 		 - click イベントは発火しない（または dnd-kit がキャンセルしている）
 		 */
-		// 
 		// !transform で確実にドラッグ終了を検出
 		if (!transform || (Math.abs(transform.x) < 5 && Math.abs(transform.y) < 5)) {
-			// if (Math.abs(e.movementX) < 5 && Math.abs(e.movementY) < 5) {
+			// if (Math.abs(e.movementX) < 5 && Math.abs(e.movementY) < 5) { は(0, 0)で反応するので、ドラッグは常に0
 			// if (e.button === 0) { // 左クリックのみ選択とみなす
 			selectNote(id);
 			// e.movementX, e.movementY == 0 のときのみ反応
 			console.log(`${id}: ${style.transform} の移動と判断`);
 		}
-		// transform との重複
-		// setIsDragging(false); // ← ドラッグ終了時にリセット
 	};
-
-	// どういうわけかこれが無いとエラーになる。中身は反応しない(useCallback 必須)↙
-	/**
-	 * 💡 なぜ onClick={openNoteDetail} が “治った”ように見えるか
-			onClickがあるとイベントフローと再レンダリングタイミングが変わり、
-			たまたまダメージを受けないケースになるだけ
-	 */
-	// const openNoteDetail = useCallback((e: React.MouseEvent) => {
-	// 	console.log(`mouse-event: ${e.currentTarget}`);
-	// 	// ここでノートの詳細表示を開く処理を実装
-	// 	console.log(`ノート ${id} の詳細を表示`);
-	// 	// selectNote(id);
-	// }, []);
-	// const handleClick = () => {
-	// 	if (!isDragging) {
-	// 		selectNote(id);
-	// 		// 詳細開く処理
-	// 		console.log(`ノート ${id} の詳細を表示`);
-	// 	}
-	// };
 
 	const colorClass = categoryColors[category] || 'bg-yellow-100 border-yellow-300';
 
@@ -78,8 +55,6 @@ export const StickyNote = ({ id, title, x, y, category }: { id: string, title: s
 			style={style}
 			{...listeners}
 			{...attributes}
-			// onPointerDown={() => setIsDragging(false)}
-			// onPointerMove={() => setIsDragging(true)}
 			onPointerUp={(e) => handlePointerUp(e)} // ここでストアの選択状態を更新
 			/**
 			 * 

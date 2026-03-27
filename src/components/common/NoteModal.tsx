@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import ReactMarkdown from 'react-markdown';
 
@@ -10,19 +10,9 @@ export const NoteModal = () => {
   const note = notes.find((n) => n.id === selectedNoteId);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
-  const [editCategory, setEditCategory] = useState<Category>('house');
-
-  // モーダルが開いた時に値をセット
-  useEffect(() => {
-    if (note) {
-      setEditTitle(note.title);
-      setEditContent(note.content);
-      setEditCategory(note.category);
-      setIsEditing(false);
-    }
-  }, [selectedNoteId, note]);
+  const [editTitle, setEditTitle] = useState(note?.title || '');
+  const [editContent, setEditContent] = useState(note?.content || '');
+  const [editCategory, setEditCategory] = useState<Category>(note?.category || 'house');
 
   if (!note) return null;
 
