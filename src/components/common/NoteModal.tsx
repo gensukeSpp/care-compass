@@ -75,6 +75,20 @@ export const NoteModal = () => {
           )}
         </div>
 
+        {/* 履歴エリア */}
+        {note.history && note.history.length > 0 && (
+          <div className="p-4 border-t bg-gray-50">
+            <h3 className="font-bold text-sm mb-2 text-gray-600">変更履歴</h3>
+            <ul className="text-xs text-gray-500 space-y-1 max-h-24 overflow-y-auto">
+              {note.history.map((h, index) => (
+                <li key={index}>
+                  {new Date(h.timestamp).toLocaleString()}: {h.from} → {h.to}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* フッター（アクション） */}
         <div className="p-4 border-t bg-gray-50 flex justify-between items-center">
           <button

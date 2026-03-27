@@ -5,6 +5,12 @@ export type QuadrantId = 'neutral' | 'can' | 'cannot' | 'risk' | 'request';
 export type Category = 'house' | 'food' | 'health' | 'medical' | 'social';
 
 // 付箋の型定義 (Unified)
+export interface History {
+  from: QuadrantId;
+  to: QuadrantId;
+  timestamp: string;
+}
+
 export interface Note {
   id: string;
   title: string;
@@ -16,4 +22,5 @@ export interface Note {
   // Position as percentages (0-100)
   x: number;
   y: number;
+  history?: History[];
 }

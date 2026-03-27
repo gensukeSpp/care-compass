@@ -4,10 +4,10 @@ import { useStore } from './store/useStore';
 import { StickyNote } from './components/sticky-note/StickyNote';
 import { AddNoteForm } from './components/common/AddNoteForm';
 import { NoteModal } from './components/common/NoteModal';
-import { pixelsToPercentage } from './utils/positionUtils';
+import { pixelsToPercentage, getQuadrantFromPosition } from './utils/positionUtils';
 
 function App() {
-  const { notes, updateNotePosition, containerDimensions, setContainerDimensions, selectedNoteId } = useStore();
+  const { notes, updateNotePosition, containerDimensions, setContainerDimensions, selectedNoteId, updateNoteStatus } = useStore();
 
   useEffect(() => {
     const updateSize = () => {
@@ -25,7 +25,15 @@ function App() {
       // delta(px) を比率(%)に変換して足す
       const dxPct = pixelsToPercentage(delta.x, containerDimensions.width);
       const dyPct = pixelsToPercentage(delta.y, containerDimensions.height);
-      updateNotePosition(String(active.id), note.x + dxPct, note.y + dyPct);
+      const newX = note.x + dxPct;
+      const newY = note.y + dyPct;
+
+      updateNotePosition(String(active.id), newX, newY);
+
+      const newStatus = getQuadrantFromPosition(newX, newY);
+      if (note.status !== newStatus) {
+        updateNoteStatus(String(active.id), newStatus);
+      }
     }
   };
 
