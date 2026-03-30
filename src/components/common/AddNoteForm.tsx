@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useStore } from '../../store/useStore';
 import { type Category, type QuadrantId } from '../../types/index';
 
 export const AddNoteForm = () => {
   const addNote = useStore((state) => state.addNote);
+  const { isAddFormOpen, draftContent, closeAddForm } = useStore();
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<Category>('house');
   const [quadrant, setQuadrant] = useState<QuadrantId>('can');
+
+  // draftContent（ドロップされた内容）があればセットする
+  useEffect(() => {
+    if (isAddFormOpen) {
+      setContent(draftContent || '');
+      setIsOpen(true);
+      closeAddForm();
+    }
+  }, [isAddFormOpen, draftContent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -20,10 +20,10 @@ describe('useStore', () => {
   });
 
   it('should update note position', () => {
-    const { notes, updateNotePosition } = useStore.getState();
+    const { notes, updateNotePositionAndStatus } = useStore.getState();
     const noteId = notes[0].id;
 
-    updateNotePosition(noteId, 50, 50);
+    updateNotePositionAndStatus(noteId, 50, 50);
 
     const updatedNote = useStore.getState().notes.find(n => n.id === noteId);
     expect(updatedNote?.x).toBe(50);
@@ -52,14 +52,12 @@ describe('useStore', () => {
   });
 
   it('should update note status and record history', () => {
-    const { notes, updateNoteStatus, addNote } = useStore.getState();
+    const { updateNoteStatus, addNote } = useStore.getState();
 
-    // Ensure there is a note to test with
-    if (notes.length === 0) {
-      addNote('Initial Note', 'Content', 'health', 'can');
-    }
-
-    const noteToUpdate = useStore.getState().notes[0];
+    // このテスト専用のノートを追加して、テストの独立性を確保する
+    addNote('History Test Note', 'Content', 'health', 'can');
+    const notes = useStore.getState().notes;
+    const noteToUpdate = notes[notes.length - 1]; // 最後に追加されたノートを取得
     const noteId = noteToUpdate.id;
     const originalStatus = noteToUpdate.status;
     const newStatus = 'cannot';

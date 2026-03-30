@@ -4,7 +4,7 @@ import { useStore } from "../store/useStore";
 import { pixelsToPercentage, getQuadrantFromPosition } from '../utils/positionUtils';
 
 export const useBoardLogic = () => {
-  const { notes, updateNotePosition, containerDimensions, updateNoteStatus } = useStore();
+  const { notes, updateNotePositionAndStatus, containerDimensions } = useStore();
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, delta } = event;
     const note = notes.find((n) => n.id === active.id);
@@ -15,11 +15,11 @@ export const useBoardLogic = () => {
       const newX = note.x + dxPct;
       const newY = note.y + dyPct;
 
-      updateNotePosition(String(active.id), newX, newY);
+      updateNotePositionAndStatus(String(active.id), newX, newY);
 
       const newStatus = getQuadrantFromPosition(newX, newY);
       if (note.status !== newStatus) {
-        updateNoteStatus(String(active.id), newStatus);
+        updateNotePositionAndStatus(String(active.id), newX, newY);
       }
     }
   }
