@@ -36,12 +36,12 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] **Coordinate Normalization:** Implement percentage-based positioning for responsiveness.
 - [x] **Note Modal:** Full Markdown rendering and basic edit functionality.
 - [x] **Category Mapping:** Ensure icons and colors match the 5 categories in `設計書.md`.
-- [x] **Dynamic Status & History:** Update note status on D&D and log changes, viewable in the modal.
 
 ### Phase 2: Enhanced UI & Features
 - [ ] **Google Keep Drawer:** Implementation of a "Pending Box" drawer for notes from Google Keep/Markdown paste.
 - [ ] **Markdown Batch Import:** Tool to convert care manager reports (Markdown) into individual sticky notes.
 - [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
+- [ ] **History Log:** Simple log within the note modal to track status changes (e.g., moved from "Risk" to "Cannot").
 
 ### Phase 3: Advanced Features
 - [ ] Variable Quadrant Boundaries.

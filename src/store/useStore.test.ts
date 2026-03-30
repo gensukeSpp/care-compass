@@ -11,9 +11,9 @@ describe('useStore', () => {
   it('should add a note', () => {
     const { addNote } = useStore.getState();
     const initialNotesCount = useStore.getState().notes.length;
-
+    
     addNote('Test Note', 'Test Content', 'health', 'can');
-
+    
     const notes = useStore.getState().notes;
     expect(notes.length).toBe(initialNotesCount + 1);
     expect(notes[notes.length - 1].title).toBe('Test Note');
@@ -22,9 +22,9 @@ describe('useStore', () => {
   it('should update note position', () => {
     const { notes, updateNotePosition } = useStore.getState();
     const noteId = notes[0].id;
-
+    
     updateNotePosition(noteId, 50, 50);
-
+    
     const updatedNote = useStore.getState().notes.find(n => n.id === noteId);
     expect(updatedNote?.x).toBe(50);
     expect(updatedNote?.y).toBe(50);
@@ -33,10 +33,10 @@ describe('useStore', () => {
   it('should select a note', () => {
     const { notes, selectNote } = useStore.getState();
     const noteId = notes[0].id;
-
+    
     selectNote(noteId);
     expect(useStore.getState().selectedNoteId).toBe(noteId);
-
+    
     selectNote(null);
     expect(useStore.getState().selectedNoteId).toBe(null);
   });
@@ -45,35 +45,9 @@ describe('useStore', () => {
     const { notes, deleteNote } = useStore.getState();
     const noteId = notes[0].id;
     const initialNotesCount = notes.length;
-
+    
     deleteNote(noteId);
     expect(useStore.getState().notes.length).toBe(initialNotesCount - 1);
     expect(useStore.getState().notes.find(n => n.id === noteId)).toBeUndefined();
-  });
-
-  it('should update note status and record history', () => {
-    const { notes, updateNoteStatus, addNote } = useStore.getState();
-
-    // Ensure there is a note to test with
-    if (notes.length === 0) {
-      addNote('Initial Note', 'Content', 'health', 'can');
-    }
-
-    const noteToUpdate = useStore.getState().notes[0];
-    const noteId = noteToUpdate.id;
-    const originalStatus = noteToUpdate.status;
-    const newStatus = 'cannot';
-
-    updateNoteStatus(noteId, newStatus);
-
-    const updatedNote = useStore.getState().notes.find(n => n.id === noteId);
-
-    expect(updatedNote?.status).toBe(newStatus);
-    expect(updatedNote?.history).toBeDefined();
-    expect(updatedNote?.history?.length).toBe((noteToUpdate.history?.length || 0) + 1);
-
-    const latestHistory = updatedNote?.history?.[updatedNote.history.length - 1];
-    expect(latestHistory?.from).toBe(originalStatus);
-    expect(latestHistory?.to).toBe(newStatus);
   });
 });

@@ -16,7 +16,6 @@ interface BoardState {
 	updateNote: (id: string, updates: Partial<Note>) => void;
 	deleteNote: (id: string) => void;
 	setContainerDimensions: (width: number, height: number) => void; // 追加
-	updateNoteStatus: (id: string, newStatus: QuadrantId) => void;
 }
 
 function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
@@ -45,7 +44,6 @@ function createNote(title: string, content: string, category: Category, status: 
 		x,
 		y,
 		updatedAt: new Date().toISOString(),
-		history: [],
 	};
 }
 export const useStore = create<BoardState>()(
@@ -81,29 +79,6 @@ export const useStore = create<BoardState>()(
 					notes: state.notes.filter((n) => n.id !== id),
 					selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId, // 開いていたら閉じる
 				})),
-			updateNoteStatus: (id, newStatus) =>
-				set((state) => {
-					const note = state.notes.find((n) => n.id === id);
-					if (!note || note.status === newStatus) return state;
-
-					const newHistoryEntry = {
-						from: note.status,
-						to: newStatus,
-						timestamp: new Date().toISOString(),
-					};
-
-					return {
-						notes: state.notes.map((n) =>
-							n.id === id
-								? {
-									...n,
-									status: newStatus,
-									history: [...(n.history || []), newHistoryEntry],
-								}
-								: n
-						),
-					};
-				}),
 		}),
 		{ name: 'care-board-storage' } // LocalStorageに自動保存される
 	)
