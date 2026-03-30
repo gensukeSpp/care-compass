@@ -81,7 +81,7 @@ export const NoteModal = () => {
             <h3 className="font-bold text-sm mb-2 text-gray-600">変更履歴</h3>
             <ul className="text-xs text-gray-500 space-y-1 max-h-24 overflow-y-auto">
               {note.history.map((h, index) => (
-                <li key={index}>
+                <li key={h.timestamp}>
                   {new Date(h.timestamp).toLocaleString()}: {h.from} → {h.to}
                 </li>
               ))}
