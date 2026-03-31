@@ -17,10 +17,11 @@ export const useBoardLogic = () => {
 
       updateNotePositionAndStatus(String(active.id), newX, newY);
 
-      const newStatus = getQuadrantFromPosition(newX, newY);
-      if (note.status !== newStatus) {
-        updateNotePositionAndStatus(String(active.id), newX, newY);
-      }
+      // 重複になる
+      // const newStatus = getQuadrantFromPosition(newX, newY);
+      // if (note.status !== newStatus) {
+      //   updateNotePositionAndStatus(String(active.id), newX, newY);
+      // }
     }
   }
   return { notes, handleDragEnd };
