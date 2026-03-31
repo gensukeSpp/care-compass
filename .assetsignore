@@ -1,0 +1,9 @@
+**/node_modules
+**/.DS_Store
+**/.git
+**/.gemini
+**/.serena
+**/tests
+**/docs
+GEMINI.md
+設計書.md

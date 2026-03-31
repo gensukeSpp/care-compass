@@ -1,0 +1,9 @@
+name = "care-compass"
+# Set this to today's date
+compatibility_date = "2026-03-31"
+
+workers_dev = false
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
