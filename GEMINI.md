@@ -39,13 +39,15 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 
 ### Phase 2: Enhanced UI & Interactive Features
 - [ ] **Visual Feedback:** Implement "Hover/Tap Preview" for note contents before opening the modal.
-- [ ] **Google Keep Drawer:** Implementation of a "Pending Box" drawer for notes from Google Keep/Markdown paste.
-- [ ] **Merge/Append Functionality:** Implement logic to append content when notes are dropped on each other.
+- [x] **Pending Box Drawer:** Implementation of a sliding drawer for notes (ready for Keep/MD integration).
+- [x] **Markdown File Import:** Basic support for dropping `.md` files to create board notes (via `useDropMdFile`).
+- [ ] **Merge Pending Note with Existing Board Note (Issue #7):** Implement logic to append content when a pending note is dropped on an existing board note.
 - [ ] **Rich Editor:** Integrate `react-simplemde-editor` for better Markdown editing experience.
 - [ ] **Category Polish:** Ensure icons (🏠, 🍱, 💪, 💊, 🧑‍🤝‍🧑) are consistently used in StickyNotes and Modal.
 
 ### Phase 3: Advanced Features & Integration
-- [ ] **Markdown Batch Import:** Tool to convert care manager reports into individual sticky notes.
+- [ ] **Markdown Batch Import:** Tool to convert complex reports or multiple files into individual sticky notes in Pending Box.
+- [ ] **Google Keep Integration:** Implementation of OAuth 2.0 and API sync to fetch notes into Pending Box.
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
 - [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
 - [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.

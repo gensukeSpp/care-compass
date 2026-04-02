@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { Category, QuadrantId, Note } from '../types/index';
 import { getQuadrantFromPosition } from '../utils/positionUtils';
-import { INITIAL_NOTE } from './initialData';
+import { INITIAL_NOTE, INITIAL_PENDING_NOTES } from './initialData';
 
 interface BoardState {
 	notes: Note[];
@@ -66,7 +66,7 @@ export const useStore = create<BoardState>()(
 	persist(
 		(set) => ({
 			notes: INITIAL_NOTE,
-			pendingNotes: [], // 初期化
+			pendingNotes: INITIAL_PENDING_NOTES, // 初期データをセット
 			selectedNoteId: null,
 			containerDimensions: { width: 1024, height: 768 }, // デフォルト値
 			selectNote: (id) => set({ selectedNoteId: id }),
@@ -229,6 +229,22 @@ export const useStore = create<BoardState>()(
 			closeAddForm: () => set({ isAddFormOpen: false, draftContent: '' }),
 			setDraftContent: (content) => set({ draftContent: content }),
 		}),
-		{ name: 'care-board-storage' } // LocalStorageに自動保存される
+		{ 
+			name: 'care-board-storage',
+			version: 1, // バージョンを上げる
+			migrate: (persistedState: any, version: number) => {
+				if (version === 0) {
+					// バージョン0（以前の状態）から移行する場合、
+					// pendingNotes が空、または存在しないなら初期データを注入する
+					return {
+						...persistedState,
+						pendingNotes: (persistedState.pendingNotes && persistedState.pendingNotes.length > 0) 
+							? persistedState.pendingNotes 
+							: INITIAL_PENDING_NOTES
+					};
+				}
+				return persistedState as BoardState;
+			}
+		}
 	)
 );

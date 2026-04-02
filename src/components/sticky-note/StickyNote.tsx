@@ -30,7 +30,6 @@ export const StickyNote = ({ id, title, x, y, category }: { id: string, title: s
 	};
 
 	const handlePointerUp = (e: React.PointerEvent) => {
-		console.log(`pointer-event: ${e.currentTarget}`);
 		// ドラッグとクリックを判別するため、微細な移動ならクリックとみなす
 		/**
 		 - listeners によって pointerdown → pointermove の変位を検出してドラッグ開始

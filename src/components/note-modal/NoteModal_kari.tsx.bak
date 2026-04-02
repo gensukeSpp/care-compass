@@ -1,0 +1,21 @@
+import { useNoteModalState } from "../../hooks/useNoteState"
+import { NoteModalHeader } from "./NoteModalHeader";
+import { ModalWrapper } from "./NoteModalWrapper";
+
+const NoteModal = () => {
+  const { note, isEditing, setIsEditing, editTitle, setEditTitle, editContent, setEditContent, isPending, selectNote } = useNoteModalState();
+
+  return (
+    <ModalWrapper onClose={isEditing}>
+      <NoteModalHeader
+        isEditing={isEditing}
+        editTitle={editTitle}
+        onTitleChange={setEditTitle}
+        categoryLabel={note!.category}
+        noteTitle={note!.title}
+        isPending={isPending}
+        selectNote={selectNote}
+      />
+    </ModalWrapper>
+  );
+}

@@ -1,13 +1,11 @@
-import { DndContext } from '@dnd-kit/core';
-
-import { useBoardLogic } from '../../hooks/useDragOnBoard';
 import { BoardBackground } from './BoardBackground';
 import { StickyNote } from '../sticky-note/StickyNote';
 import { useDropOnBoard } from '../../hooks/useDropMdFile';
+import { useStore } from '../../store/useStore';
 
 export function Board() {
   const { handleDrop } = useDropOnBoard();
-  const { notes, handleDragEnd } = useBoardLogic(); 
+  const notes = useStore((state) => state.notes);
 
   return (
     <div
@@ -15,9 +13,7 @@ export function Board() {
       onDrop={handleDrop}
       className="h-screen w-screen relative overflow-hidden">
       <BoardBackground type="4-quadrant" /> {/* グリッドを抽象化 */}
-      <DndContext onDragEnd={handleDragEnd}>
-        {notes.map(note => <StickyNote key={note.id} {...note} />)}
-      </DndContext>
+      {notes.map(note => <StickyNote key={note.id} {...note} />)}
     </div>
   );
 }
