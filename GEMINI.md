@@ -3,50 +3,53 @@
 This project follows the design and principles outlined in `設計書.md`. Any development should prioritize the concepts and architecture defined there.
 
 ## 1. Project Concept
-**Care Compass** is a 4-quadrant action board designed to visualize the independence and safety of elderly individuals, optimizing family support.
+**Care Compass** is a 4-quadrant action board designed to visualize the independence and safety of elderly individuals, optimizing family support. It aims to clarify the "appropriate distance" by identifying what the person "can do" vs "is risky," resolving discrepancies in family support.
 
 ### The Four Quadrants
-- **Can (できる):** Maintains self-confidence.
-- **Cannot (できない):** Requires intervention/service.
-- **Risk (危険を伴う):** Requires monitoring or environmental improvement.
-- **Request (頼みたい):** Reflects the person's own will/requests.
+- **Can (できる):** Maintains self-confidence and independence.
+- **Cannot (できない):** Requires intervention, services, or family support.
+- **Risk (危険を伴う):** Requires monitoring, environmental improvement, or preventive measures.
+- **Request (頼みたい):** Reflects the person's own will and specific requests.
 
 ## 2. Technical Stack
 - **Frontend:** React 19 (TypeScript) + Vite
-- **Styling:** Tailwind CSS 4 (Mobile-friendly design)
+- **Styling:** Tailwind CSS 4 (Mobile-friendly, PWA-ready design)
 - **State Management:** Zustand (with Persistence)
-- **Drag & Drop:** `dnd-kit` (Using absolute coordinates or percentages)
-- **Content:** `react-markdown` for note details
+- **Drag & Drop:** `dnd-kit` (Using percentage-based coordinates)
+- **Content:** `react-markdown` (Rendering) + `react-simplemde-editor` (Planned for editing)
 - **Icons:** `Lucide React`
 - **Testing:** Vitest
 
 ## 3. Core Architecture Mandates (from 設計書.md)
-- **Data Schema:** Each note MUST have: `id`, `title`, `content` (MD), `category`, `status` (quadrant), `position` (x, y), `author`, `updatedAt`.
+- **Data Schema:** Each note MUST have: `id`, `title`, `content` (MD), `category`, `status` (quadrant), `position` (x, y), `author`, `updatedAt`, and `history` (log of changes).
 - **Abstraction:** Separate the board framework from the sticky notes to allow for future quadrant changes (e.g., Urgency vs. Importance).
-- **Coordinate System:** Coordinate calculation should ideally be independent or percentage-based to support variable boundary lines.
-- **Storage:** Initial implementation uses `LocalStorage` via Zustand `persist`.
+- **Coordinate System:** Coordinate calculation is percentage-based to support responsive layouts and variable boundary lines.
+- **Append Logic:** Notes support an "Append Mode" where new comments are timestamped and added to the end of the content.
+- **Merge Logic:** Dropping a new note onto an existing one should merge/append the content.
 
 ## 4. Current Implementation Status & Todo List
 
 ### Phase 1: Core Foundation (MVP Refinement)
 - [x] Basic 4-quadrant UI layout.
-- [x] Sticky note rendering with color coding.
-- [x] Basic Drag & Drop (dnd-kit).
-- [x] **Refactor Data Types:** Align `StickyNote` type with `設計書.md` (Add `status`, unify `Note` types).
-- [x] **Coordinate Normalization:** Implement percentage-based positioning for responsiveness.
-- [x] **Note Modal:** Full Markdown rendering and basic edit functionality.
-- [x] **Category Mapping:** Ensure icons and colors match the 5 categories in `設計書.md`.
-- [x] **Dynamic Status & History:** Update note status on D&D and log changes, viewable in the modal.
+- [x] Sticky note rendering with color coding (5 categories).
+- [x] Basic Drag & Drop (dnd-kit) with percentage normalization.
+- [x] **Refactor Data Types:** Align `StickyNote` type with `設計書.md`.
+- [x] **Note Modal:** Markdown rendering and basic edit functionality.
+- [x] **Dynamic Status & History:** Update note status on D&D and log changes.
 
-### Phase 2: Enhanced UI & Features
+### Phase 2: Enhanced UI & Interactive Features
+- [ ] **Visual Feedback:** Implement "Hover/Tap Preview" for note contents before opening the modal.
 - [ ] **Google Keep Drawer:** Implementation of a "Pending Box" drawer for notes from Google Keep/Markdown paste.
-- [ ] **Markdown Batch Import:** Tool to convert care manager reports (Markdown) into individual sticky notes.
-- [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
+- [ ] **Merge/Append Functionality:** Implement logic to append content when notes are dropped on each other.
+- [ ] **Rich Editor:** Integrate `react-simplemde-editor` for better Markdown editing experience.
+- [ ] **Category Polish:** Ensure icons (🏠, 🍱, 💪, 💊, 🧑‍🤝‍🧑) are consistently used in StickyNotes and Modal.
 
-### Phase 3: Advanced Features
-- [ ] Variable Quadrant Boundaries.
-- [ ] Multi-device optimization (Tailwind fine-tuning).
-- [ ] Potential Backend Integration (Supabase) for family sharing.
+### Phase 3: Advanced Features & Integration
+- [ ] **Markdown Batch Import:** Tool to convert care manager reports into individual sticky notes.
+- [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
+- [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
+- [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.
+- [ ] **Potential Backend Integration:** Supabase for real-time family sharing and auth.
 
 ## 5. Directory Structure
 ```

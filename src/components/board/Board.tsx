@@ -7,7 +7,7 @@ import { useDropOnBoard } from '../../hooks/useDropMdFile';
 
 export function Board() {
   const { handleDrop } = useDropOnBoard();
-  const { notes, handleDragEnd } = useBoardLogic(); // D&Dロジックを分離
+  const { notes, handleDragEnd } = useBoardLogic(); 
 
   return (
     <div

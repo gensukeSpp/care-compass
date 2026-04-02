@@ -9,14 +9,13 @@ import { INITIAL_NOTE } from './initialData';
 interface BoardState {
 	notes: Note[];
 	selectedNoteId: string | null;
-	containerDimensions: { width: number; height: number }; // 追加
+	containerDimensions: { width: number; height: number };
 	selectNote: (id: string | null) => void;
-	// updateNotePosition: (id: string, x: number, y: number) => void;
 	updateNoteContent: (id: string, content: string) => void;
 	addNote: (title: string, content: string, category: Category, status: QuadrantId) => void;
 	updateNote: (id: string, updates: Partial<Note>) => void;
 	deleteNote: (id: string) => void;
-	setContainerDimensions: (width: number, height: number) => void; // 追加
+	setContainerDimensions: (width: number, height: number) => void;
 	updateNoteStatus: (id: string, newStatus: QuadrantId) => void;
 	updateNotePositionAndStatus: (id: string, x: number, y: number) => void;
 	// 「ファイルから読み込んだ一時的な内容」を管理する状態を追加
@@ -25,6 +24,11 @@ interface BoardState {
 	openAddForm: () => void;
 	closeAddForm: () => void;
 	setDraftContent: (content: string) => void;
+	// Pending
+	pendingNotes: Note[]; // 追加
+	addPendingNote: (title: string, content: string, category: Category) => void; // 追加
+	moveToPending: (id: string) => void; // 追加
+	moveToBoard: (id: string, x: number, y: number) => void; // 追加
 }
 
 function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
@@ -40,6 +44,8 @@ function createNote(title: string, content: string, category: Category, status: 
 			x = 5; y = 55; break;
 		case 'request':
 			x = 55; y = 55; break;
+		case 'pending':
+			x = 0; y = 0; break; // drawer内では座標は不要
 		default:
 			x = 40; y = 40; // central area for neutral
 	}
@@ -60,19 +66,26 @@ export const useStore = create<BoardState>()(
 	persist(
 		(set) => ({
 			notes: INITIAL_NOTE,
+			pendingNotes: [], // 初期化
 			selectedNoteId: null,
 			containerDimensions: { width: 1024, height: 768 }, // デフォルト値
 			selectNote: (id) => set({ selectedNoteId: id }),
-			// updateNotePosition: (id, x, y) =>
-			// 	set((state) => ({
-			// 		notes: state.notes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-			// 	})),
 			setContainerDimensions: (width, height) =>
 				set({ containerDimensions: { width, height } }),
 			updateNoteContent: (id, content) =>
-				set((state) => ({
-					notes: state.notes.map((n) => (n.id === id ? { ...n, content } : n))
-				})),
+				set((state) => {
+					// notes か pendingNotes のどちらかにあるか探して更新
+					const isInNotes = state.notes.some(n => n.id === id);
+					if (isInNotes) {
+						return {
+							notes: state.notes.map((n) => (n.id === id ? { ...n, content } : n))
+						};
+					} else {
+						return {
+							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, content } : n))
+						};
+					}
+				}),
 			addNote: (title, content, category, status) =>
 				set((state) => ({
 					notes: [
@@ -80,18 +93,36 @@ export const useStore = create<BoardState>()(
 						createNote(title, content, category, status)
 					],
 				})),
-			updateNote: (id, updates) =>
+			addPendingNote: (title, content, category) =>
 				set((state) => ({
-					notes: state.notes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+					pendingNotes: [
+						...state.pendingNotes,
+						createNote(title, content, category, 'pending')
+					],
 				})),
+			updateNote: (id, updates) =>
+				set((state) => {
+					const isInNotes = state.notes.some(n => n.id === id);
+					if (isInNotes) {
+						return {
+							notes: state.notes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+						};
+					} else {
+						return {
+							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+						};
+					}
+				}),
 			deleteNote: (id) =>
 				set((state) => ({
 					notes: state.notes.filter((n) => n.id !== id),
+					pendingNotes: state.pendingNotes.filter((n) => n.id !== id),
 					selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId, // 開いていたら閉じる
 				})),
 			updateNoteStatus: (id, newStatus) =>
 				set((state) => {
-					const note = state.notes.find((n) => n.id === id);
+					// 両方の配列から探す
+					const note = state.notes.find((n) => n.id === id) || state.pendingNotes.find(n => n.id === id);
 					if (!note || note.status === newStatus) return state;
 
 					const newHistoryEntry = {
@@ -100,49 +131,98 @@ export const useStore = create<BoardState>()(
 						timestamp: new Date().toISOString(),
 					};
 
-					return {
-						notes: state.notes.map((n) =>
-							n.id === id
-								? {
-									...n,
-									status: newStatus,
-									history: [...(n.history || []), newHistoryEntry],
-								}
-								: n
-						),
+					const updatedNote = {
+						...note,
+						status: newStatus,
+						history: [...(note.history || []), newHistoryEntry],
 					};
+
+					// 状態が変わった時に配列間を移動させるべきか検討
+					// status が 'pending' かどうかで所属配列を決める
+					if (newStatus === 'pending') {
+						return {
+							notes: state.notes.filter(n => n.id !== id),
+							pendingNotes: [...state.pendingNotes.filter(n => n.id !== id), updatedNote]
+						};
+					} else {
+						return {
+							notes: [...state.notes.filter(n => n.id !== id), updatedNote],
+							pendingNotes: state.pendingNotes.filter(n => n.id !== id)
+						};
+					}
 				}),
 			updateNotePositionAndStatus: (id, x, y) =>
 				set((state) => {
-					const notes = state.notes.map((n) => {
-						if (n.id !== id) {
-							return n;
-						}
+					// 座標更新は基本 board上のノートが対象
+					const note = state.notes.find(n => n.id === id);
+					if (!note) return state;
 
-						// Note found, apply updates
-						const newStatus = getQuadrantFromPosition(x, y);
-						const statusChanged = n.status !== newStatus;
+					const newStatus = getQuadrantFromPosition(x, y);
+					const statusChanged = note.status !== newStatus;
 
-						if (!statusChanged) {
-							return { ...n, x, y };
-						}
-
-						const newHistoryEntry = {
-							from: n.status,
-							to: newStatus,
-							timestamp: new Date().toISOString(),
-						};
-
+					if (!statusChanged) {
 						return {
-							...n,
-							x,
-							y,
-							status: newStatus,
-							history: [...(n.history || []), newHistoryEntry],
+							notes: state.notes.map(n => n.id === id ? { ...n, x, y } : n)
 						};
-					});
-					return { notes };
+					}
+
+					const newHistoryEntry = {
+						from: note.status,
+						to: newStatus,
+						timestamp: new Date().toISOString(),
+					};
+
+					const updatedNote = {
+						...note,
+						x,
+						y,
+						status: newStatus,
+						history: [...(note.history || []), newHistoryEntry],
+					};
+
+					// board内での status変更（象限移動）
+					// 'pending' になることは getQuadrantFromPosition の仕様上ないはずだが、汎用性のために一応
+					if (newStatus === 'pending') {
+						return {
+							notes: state.notes.filter(n => n.id !== id),
+							pendingNotes: [...state.pendingNotes.filter(n => n.id !== id), updatedNote]
+						};
+					} else {
+						return {
+							notes: state.notes.map(n => n.id === id ? updatedNote : n)
+						};
+					}
 				}),
+			moveToPending: (id) => {
+				const { updateNoteStatus } = useStore.getState();
+				updateNoteStatus(id, 'pending');
+			},
+			moveToBoard: (id, x, y) => {
+				set((state) => {
+					const note = state.pendingNotes.find(n => n.id === id) || state.notes.find(n => n.id === id);
+					if (!note) return state;
+
+					const newStatus = getQuadrantFromPosition(x, y);
+					const newHistoryEntry = {
+						from: note.status,
+						to: newStatus,
+						timestamp: new Date().toISOString(),
+					};
+
+					const updatedNote = {
+						...note,
+						x,
+						y,
+						status: newStatus,
+						history: [...(note.history || []), newHistoryEntry],
+					};
+
+					return {
+						notes: [...state.notes.filter(n => n.id !== id), updatedNote],
+						pendingNotes: state.pendingNotes.filter(n => n.id !== id)
+					};
+				});
+			},
 			isAddFormOpen: false,
 			draftContent: '',
 			openAddForm: () => set({ isAddFormOpen: true }),

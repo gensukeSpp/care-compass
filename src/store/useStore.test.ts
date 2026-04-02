@@ -74,4 +74,32 @@ describe('useStore', () => {
     expect(latestHistory?.from).toBe(originalStatus);
     expect(latestHistory?.to).toBe(newStatus);
   });
+
+  it('should handle pending notes', () => {
+    const { addPendingNote, moveToBoard, moveToPending } = useStore.getState();
+    const initialNotesCount = useStore.getState().notes.length;
+    const initialPendingCount = useStore.getState().pendingNotes.length;
+
+    // Add a pending note
+    addPendingNote('Pending Note', 'Content', 'social');
+    expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount + 1);
+    const pendingNote = useStore.getState().pendingNotes[0];
+    expect(pendingNote.status).toBe('pending');
+
+    // Move pending note to board
+    moveToBoard(pendingNote.id, 20, 30);
+    expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount);
+    expect(useStore.getState().notes.length).toBe(initialNotesCount + 1);
+    
+    const boardNote = useStore.getState().notes.find(n => n.id === pendingNote.id);
+    expect(boardNote?.status).toBe('can'); // (20, 30) is 'can' quadrant
+    expect(boardNote?.x).toBe(20);
+    expect(boardNote?.y).toBe(30);
+
+    // Move board note back to pending
+    moveToPending(pendingNote.id);
+    expect(useStore.getState().notes.length).toBe(initialNotesCount);
+    expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount + 1);
+    expect(useStore.getState().pendingNotes.find(n => n.id === pendingNote.id)?.status).toBe('pending');
+  });
 });
