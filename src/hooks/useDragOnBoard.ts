@@ -1,7 +1,7 @@
 import { type DragEndEvent } from "@dnd-kit/core";
 
 import { useStore } from "../store/useStore";
-import { pixelsToPercentage, getQuadrantFromPosition } from '../utils/positionUtils';
+import { pixelsToPercentage } from '../utils/positionUtils';
 
 export const useBoardLogic = () => {
   const { notes, updateNotePositionAndStatus, containerDimensions } = useStore();
@@ -16,12 +16,6 @@ export const useBoardLogic = () => {
       const newY = note.y + dyPct;
 
       updateNotePositionAndStatus(String(active.id), newX, newY);
-
-      // 重複になる
-      // const newStatus = getQuadrantFromPosition(newX, newY);
-      // if (note.status !== newStatus) {
-      //   updateNotePositionAndStatus(String(active.id), newX, newY);
-      // }
     }
   }
   return { notes, handleDragEnd };

@@ -58,9 +58,9 @@ export const AddNoteForm = () => {
         >
           <option value="house">🏠 居住・環境</option>
           <option value="food">🍱 食生活</option>
-          <option value="health">💪 体力づくり</option>
+          <option value="health">💪 身体・体力</option>
           <option value="medical">💊 医療・健康</option>
-          <option value="social">🧑‍🤝‍🧑 社会活動</option>
+          <option value="social">🧑‍🤝‍🧑 社会・交流</option>
         </select>
         <select
           className="w-full border p-2 rounded text-sm bg-white"
