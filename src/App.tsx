@@ -1,14 +1,12 @@
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { useStore } from './store/useStore';
+import { DndContext, useSensors, useSensor, PointerSensor } from '@dnd-kit/core';
 import { AddNoteForm } from './components/common/AddNoteForm';
-import { NoteModal } from './components/note-modal/NoteModal';
+import { NoteModalTop } from './components/note-modal/NoteModal';
 import { Board } from './components/board/Board';
 import { PendingDrawer } from './components/pending/PendingDrawer';
 import { useContainerResize } from './hooks/useContainerResize';
 import { useBoardLogic } from './hooks/useDragOnBoard';
 
 function App() {
-  const { selectedNoteId } = useStore();
   const { handleDragEnd } = useBoardLogic();
   useContainerResize();
 
@@ -24,7 +22,7 @@ function App() {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="relative min-h-screen">
-        <NoteModal key={selectedNoteId} />
+        <NoteModalTop />
         <AddNoteForm />
         <Board />
         <PendingDrawer />
