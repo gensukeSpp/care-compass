@@ -9,7 +9,7 @@ import { NoteQuadHistory } from "./NoteModalHistory";
 import { NoteFooter } from "./NoteModalFooter";
 
 export function NoteModalTop() {
-  const { note, isEditing, setIsEditing, editTitle, setEditTitle, editContent, setEditContent, editCategory, setEditCategory, newComment, setNewComment, isAppending, setIsAppending, isPending, selectNote } = useNoteModalState();
+  const { note, isEditing, setIsEditing, isPending, selectNote, editTitle, setEditTitle, editContent, setEditContent, editCategory, setEditCategory } = useNoteModalState();
 
   if (!note) return null;
 
@@ -20,16 +20,18 @@ export function NoteModalTop() {
     medical: '💊 医療・健康',
     social: '🧑‍🤝‍🧑 社会・交流',
   };
+  console.log(isEditing);
+  // console.log(isPending);
 
   return (
     <NoteModalWrapper>
       <NoteHeader
         isEditing={isEditing}
-        editTitle={editTitle}
-        onTitleChange={setEditTitle}
-        categoryLabel={note.category}
-        noteTitle={note.title}
         isPending={isPending}
+        categoryLabel={categoryLabels[note.category]}
+        noteTitle={note.title}
+        editTitle={editTitle}
+        setEditTitle={setEditTitle}
         selectNote={selectNote}
       />
       <div className="content">
@@ -43,16 +45,12 @@ export function NoteModalTop() {
           />) : (
           <>
             <NoteContentView
-              categoryLabels={categoryLabels}
               note={note}
+              categoryLabel={categoryLabels[note.category]}
             />
             <NoteAppendWithTimestamp
               note={note}
-              isAppending={isAppending}
-              setIsAppending={setIsAppending}
-              newComment={newComment}
-              setNewComment={setNewComment}
-              editContent={editContent}
+              editContent={note.content || ''}
             />
             <NoteQuadHistory
               note={note}
@@ -65,10 +63,10 @@ export function NoteModalTop() {
         note={note}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
+        isPending={isPending}
         editTitle={editTitle}
         editContent={editContent}
         editCategory={editCategory}
-        isPending={isPending}
       />
     </NoteModalWrapper>
   );

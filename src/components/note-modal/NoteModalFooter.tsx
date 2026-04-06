@@ -6,13 +6,13 @@ interface NoteFooterProps {
   note: Note;
   isEditing: boolean;
   setIsEditing: (isEditing: boolean) => void;
+  isPending: boolean;
   editTitle: string;
   editContent: string;
   editCategory: Category;
-  isPending: boolean;
 }
 
-export function NoteFooter({ note, isEditing, setIsEditing, editTitle, editContent, editCategory, isPending }: NoteFooterProps) {
+export function NoteFooter({ note, isEditing, setIsEditing, isPending, editTitle, editContent, editCategory }: NoteFooterProps) {
   const { selectedNoteId, selectNote, updateNote, deleteNote } = useStore();
   const { addNoteToBoard } = useNoteActions(selectedNoteId!);
 
@@ -20,7 +20,7 @@ export function NoteFooter({ note, isEditing, setIsEditing, editTitle, editConte
     updateNote(note.id, {
       title: editTitle,
       content: editContent,
-      category: editCategory
+      category: editCategory,
     });
     setIsEditing(false);
   };

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { X, SquarePen, Clock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useStore } from '../../store/useStore';
-import { type Category, type QuadrantId } from '../../types/index';
-import { useNoteActions } from '../../hooks/useNoteAction';
+import { useStore } from '../store/useStore';
+import { type Category, type QuadrantId } from '../types/index';
+import { useNoteActions } from '../hooks/useNoteAction';
 
 export const NoteModal = () => {
   const { notes, pendingNotes, selectedNoteId, selectNote, updateNote, deleteNote, moveToBoard } = useStore();

@@ -1,4 +1,4 @@
-import { type Category } from "../../types";
+import type { Category } from "../../types";
 
 interface NoteEditProps {
   categoryLabels: Record<Category, string>;
@@ -9,6 +9,7 @@ interface NoteEditProps {
 }
 
 export function NoteEditForm({ categoryLabels, editContent, setEditContent, editCategory, setEditCategory }: NoteEditProps) {
+
   return (
     <div className="space-y-6">
       <div>
