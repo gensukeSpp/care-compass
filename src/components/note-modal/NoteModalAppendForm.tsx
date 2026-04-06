@@ -5,16 +5,12 @@ import { type Note } from "../../types";
 
 interface NoteAppendProps {
   note: Note;
-  isAppending: boolean;
-  setIsAppending: (isAppending: boolean) => void;
-  newComment: string;
-  setNewComment: (newComment: string) => void;
   editContent: string;
 }
 
-export function NoteAppendWithTimestamp({ note, isAppending, setIsAppending, newComment, setNewComment, editContent }: NoteAppendProps) {
-  // const [newComment, setNewComment] = useState('');
-  // const [isAppending, setIsAppending] = useState(false);
+export function NoteAppendWithTimestamp({ note, editContent }: NoteAppendProps) {
+  const [newComment, setNewComment] = useState('');
+  const [isAppending, setIsAppending] = useState(false);
   const { appendComment } = useNoteActions(note?.id || '');
 
   const handleAppendComment = () => {

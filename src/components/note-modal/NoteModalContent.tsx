@@ -2,11 +2,11 @@ import ReactMarkdown from 'react-markdown';
 import { type Category, type Note } from '../../types';
 
 interface NoteContentProps {
-  categoryLabels: Record<Category, string>;
   note: Note;
+  categoryLabels: Record<Category, string>;
 }
 
-export function NoteContentView({ categoryLabels, note }: NoteContentProps) {
+export function NoteContentView({ note, categoryLabels }: NoteContentProps) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2">

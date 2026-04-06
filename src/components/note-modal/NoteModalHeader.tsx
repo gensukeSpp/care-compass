@@ -3,16 +3,15 @@ import type { Category } from '../../types';
 
 interface NoteHeaderProps {
   isEditing: boolean;
-  editTitle: string;
-  onTitleChange: (title: string) => void;
+  isPending: boolean;
   categoryLabel: Category;
   noteTitle: string;
-  isPending: boolean;
+  editTitle: string;
+  setEditTitle: (title: string) => void;
   selectNote: (noteId: string | null) => void;
 }
 
-export const NoteHeader = ({ isEditing, editTitle, onTitleChange, categoryLabel, noteTitle, isPending, selectNote }: NoteHeaderProps) => {
-
+export const NoteHeader = ({ isEditing, isPending, categoryLabel, noteTitle, editTitle, setEditTitle, selectNote }: NoteHeaderProps) => {
   return (
     <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
       <div className="flex-1">
@@ -20,7 +19,7 @@ export const NoteHeader = ({ isEditing, editTitle, onTitleChange, categoryLabel,
           <input
             className="w-full font-bold text-xl border-b-2 border-blue-500 outline-none bg-transparent py-1"
             value={editTitle}
-            onChange={(e) => onTitleChange(e.target.value)}
+            onChange={(e) => setEditTitle(e.target.value)}
             placeholder="タイトルを入力..."
             autoFocus
           />
