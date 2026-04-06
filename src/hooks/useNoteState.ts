@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useStore } from '../store/useStore';
 import type { Category, Note } from '../types';

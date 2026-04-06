@@ -28,7 +28,7 @@ export function NoteModalTop() {
       <NoteHeader
         isEditing={isEditing}
         isPending={isPending}
-        categoryLabel={note.category}
+        categoryLabel={categoryLabels[note.category]}
         noteTitle={note.title}
         editTitle={editTitle}
         setEditTitle={setEditTitle}
@@ -46,7 +46,7 @@ export function NoteModalTop() {
           <>
             <NoteContentView
               note={note}
-              categoryLabels={categoryLabels}
+              categoryLabel={categoryLabels[note.category]}
             />
             <NoteAppendWithTimestamp
               note={note}

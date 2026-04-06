@@ -16,8 +16,6 @@ export function NoteAppendWithTimestamp({ note, editContent }: NoteAppendProps) 
   const handleAppendComment = () => {
     if (!newComment.trim()) return;
     appendComment(editContent, newComment);
-    // useEffect 内、重複だからここではいらないと思う
-    // setEditContent(appendedContent);
     setNewComment('');
     setIsAppending(false);
   };

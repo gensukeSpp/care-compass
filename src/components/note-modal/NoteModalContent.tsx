@@ -1,18 +1,18 @@
 import ReactMarkdown from 'react-markdown';
-import { type Category, type Note } from '../../types';
+import { type Note } from '../../types';
 
 interface NoteContentProps {
   note: Note;
-  categoryLabels: Record<Category, string>;
+  categoryLabel: string;
 }
 
-export function NoteContentView({ note, categoryLabels }: NoteContentProps) {
+export function NoteContentView({ note, categoryLabel }: NoteContentProps) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2">
         <span className="text-sm font-medium text-gray-500">カテゴリ:</span>
         <span className="text-sm px-2 py-0.5 bg-gray-100 rounded text-gray-700">
-          {categoryLabels[note.category]}
+          {categoryLabel}
         </span>
       </div>
       <div className="prose prose-blue max-w-none bg-blue-50/30 p-6 rounded-2xl border border-blue-100 shadow-sm mb-6">

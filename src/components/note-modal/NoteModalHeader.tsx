@@ -1,10 +1,9 @@
 import { X } from 'lucide-react';
-import type { Category } from '../../types';
 
 interface NoteHeaderProps {
   isEditing: boolean;
   isPending: boolean;
-  categoryLabel: Category;
+  categoryLabel: string;
   noteTitle: string;
   editTitle: string;
   setEditTitle: (title: string) => void;
@@ -25,7 +24,7 @@ export const NoteHeader = ({ isEditing, isPending, categoryLabel, noteTitle, edi
           />
         ) : (
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{categoryLabel}</span>
+            <span className="text-2xl">{categoryLabel.split(' ')[0]}</span>
             <h2 className="font-bold text-xl text-gray-800">{noteTitle}</h2>
             {isPending && (
               <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-semibold">
