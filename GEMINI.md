@@ -41,12 +41,14 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Visual Feedback:** Implement "Hover/Tap Preview" for note contents before opening the modal.
 - [x] **Pending Box Drawer:** Implementation of a sliding drawer for notes (ready for Keep/MD integration).
 - [x] **Markdown File Import:** Basic support for dropping `.md` files to create board notes (via `useDropMdFile`).
-- [ ] **Merge Pending Note with Existing Board Note (Issue #7):** Implement logic to append content when a pending note is dropped on an existing board note.
+- [x] **Merge Pending Note with Existing Board Note (Issue #7):** Implement logic to append content when a pending note is dropped on an existing board note.
 - [ ] **Rich Editor:** Integrate `react-simplemde-editor` for better Markdown editing experience.
 - [ ] **Category Polish:** Ensure icons (🏠, 🍱, 💪, 💊, 🧑‍🤝‍🧑) are consistently used in StickyNotes and Modal.
 
 ### Phase 3: Advanced Features & Integration
-- [ ] **Markdown Batch Import:** Tool to convert complex reports or multiple files into individual sticky notes in Pending Box.
+- [x] **Markdown Batch Import (1):** Structural split by headers & Multi-file drop support.
+- [ ] **Markdown Batch Import (2):** Keyword-based automatic classification (Category/Status).
+- [ ] **Markdown Batch Import (3):** AI-enhanced context analysis & summarization.
 - [ ] **Google Keep Integration:** Implementation of OAuth 2.0 and API sync to fetch notes into Pending Box.
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
 - [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
@@ -60,15 +62,17 @@ src/
 ├── components/         # UI Components
 │   ├── common/         # Buttons, Forms, Modals
 │   ├── board/          # Board, Grid, Quadrants
-│   └── sticky-note/    # Note, Detail View, MD Renderer
-├── hooks/              # D&D Logic, LocalStorage
+│   ├── sticky-note/    # Sticky Note item
+│   ├── note-modal/     # Detail View, Editor, History, MD Renderer
+│   └── pending/        # Pending Box Drawer, Import items
+├── hooks/              # D&D Logic, File Import, Resize handling
 ├── lib/                # External Lib Configs
-├── services/           # Google Keep API, External Sync
-├── store/              # Zustand Store
+├── services/           # Google Keep API, AI Services, External Sync
+├── store/              # Zustand Store (State Management)
 ├── types/              # TypeScript Definitions
-├── utils/              # Coordinate Calc, Date Formatting
-├── App.tsx             # Layout
-└── main.tsx            # Entry
+├── utils/              # Coordinate Calc, Date Formatting, MD Splitting
+├── App.tsx             # Main Layout & Drag Context
+└── main.tsx            # Entry point
 ```
 
 ## 6. Development Commands

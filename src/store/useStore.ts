@@ -27,8 +27,10 @@ interface BoardState {
 	// Pending
 	pendingNotes: Note[]; // 追加
 	addPendingNote: (title: string, content: string, category: Category) => void; // 追加
+	addPendingNotes: (newNotes: { title: string; content: string; category: Category }[]) => void; // 追加
 	moveToPending: (id: string) => void; // 追加
 	moveToBoard: (id: string, x: number, y: number) => void; // 追加
+	mergeNotes: (sourceId: string, targetId: string) => void; // 追加
 }
 
 function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
@@ -98,6 +100,13 @@ export const useStore = create<BoardState>()(
 					pendingNotes: [
 						...state.pendingNotes,
 						createNote(title, content, category, 'pending')
+					],
+				})),
+			addPendingNotes: (newNotes) =>
+				set((state) => ({
+					pendingNotes: [
+						...state.pendingNotes,
+						...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending'))
 					],
 				})),
 			updateNote: (id, updates) =>
@@ -220,6 +229,39 @@ export const useStore = create<BoardState>()(
 					return {
 						notes: [...state.notes.filter(n => n.id !== id), updatedNote],
 						pendingNotes: state.pendingNotes.filter(n => n.id !== id)
+					};
+				});
+			},
+			mergeNotes: (sourceId, targetId) => {
+				set((state) => {
+					if (sourceId === targetId) return state;
+
+					const source = state.notes.find(n => n.id === sourceId) || state.pendingNotes.find(n => n.id === sourceId);
+					const target = state.notes.find(n => n.id === targetId) || state.pendingNotes.find(n => n.id === targetId);
+
+					if (!source || !target) return state;
+
+					// 内容を追記
+					const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toLocaleDateString()})\n${source.content}`;
+					
+					const newHistoryEntry = {
+						from: source.status,
+						to: target.status,
+						timestamp: new Date().toISOString(),
+					};
+
+					const updatedTarget = {
+						...target,
+						content: mergedContent,
+						updatedAt: new Date().toISOString(),
+						history: [...(target.history || []), newHistoryEntry]
+					};
+
+					// 両方の配列をクリーンアップ
+					return {
+						notes: state.notes.map(n => n.id === targetId ? updatedTarget : n).filter(n => n.id !== sourceId),
+						pendingNotes: state.pendingNotes.map(n => n.id === targetId ? updatedTarget : n).filter(n => n.id !== sourceId),
+						selectedNoteId: state.selectedNoteId === sourceId ? targetId : state.selectedNoteId
 					};
 				});
 			},

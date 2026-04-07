@@ -1,4 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { type Note } from '../../types';
 
 const categoryEmojis: Record<string, string> = {
@@ -15,7 +16,7 @@ interface PendingNoteItemProps {
 }
 
 export const PendingNoteItem = ({ note, onSelect }: PendingNoteItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
     id: note.id,
     data: {
       type: 'pending-note',
@@ -23,10 +24,10 @@ export const PendingNoteItem = ({ note, onSelect }: PendingNoteItemProps) => {
     }
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 100,
-  } : undefined;
+  const style = {
+    transform: isDragging ? undefined : CSS.Translate.toString(transform),
+    touchAction: 'none' as const,
+  };
 
   return (
     <div
@@ -35,7 +36,7 @@ export const PendingNoteItem = ({ note, onSelect }: PendingNoteItemProps) => {
       {...listeners}
       {...attributes}
       className={`p-3 mb-2 bg-white border rounded shadow-sm cursor-grab active:cursor-grabbing hover:border-blue-400 transition-colors ${
-        isDragging ? 'opacity-50' : ''
+        isDragging ? 'opacity-0' : ''
       }`}
       onClick={() => onSelect(note.id)}
     >

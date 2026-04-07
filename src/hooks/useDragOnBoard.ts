@@ -1,49 +1,68 @@
-import { type DragEndEvent } from "@dnd-kit/core";
+import { useState, useCallback } from "react";
+import { type DragEndEvent, type DragStartEvent, type UniqueIdentifier } from "@dnd-kit/core";
 import { useStore } from "../store/useStore";
-import { pixelsToPercentage } from '../utils/positionUtils';
+import { pixelsToPercentage, getQuadrantFromPosition } from '../utils/positionUtils';
 
 export const useBoardLogic = () => {
-  const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, containerDimensions } = useStore();
+  const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, mergeNotes, containerDimensions } = useStore();
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, delta } = event;
-    
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (containerDimensions.width === 0 || containerDimensions.height === 0) return;
+
     // データからタイプを判別
     const activeData = active.data.current;
-    const isPending = activeData?.type === 'pending-note';
+    if (!activeData) return;
 
-    if (containerDimensions.width > 0 && containerDimensions.height > 0) {
+    const isPending = activeData.type === 'pending-note';
+    const activeNote = isPending ? activeData.note : notes.find(n => n.id === active.id);
+    
+    if (!activeNote) return;
+
+    // ドロップ位置（絶対座標）を取得
+    const rect = active.rect.current.translated;
+    if (!rect) return;
+
+    // ボード上の%座標に変換
+    // 注意: BoardがViewport全体(0,0)から始まっている前提
+    const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
+    const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
+    const targetQuadrant = getQuadrantFromPosition(xPct, yPct);
+
+    // 1. 直接他のノートの上にドロップしたかチェック (dnd-kitの over を利用)
+    // 2. もしくは、ドロップ先の象限に同じカテゴリーのノートがあるかチェック (自動マージ要件)
+    const overId = over?.id;
+    let targetNote = notes.find(n => n.id === overId);
+    
+    // もし直接ノートの上でない場合、その象限にある同じカテゴリーのノートを探す
+    if (!targetNote || targetNote.category !== activeNote.category) {
+      targetNote = notes.find(n => 
+        n.id !== active.id && 
+        n.status === targetQuadrant && 
+        n.category === activeNote.category
+      );
+    }
+    
+    // カテゴリーが一致し、自分自身でない場合にのみマージ
+    if (targetNote && targetNote.id !== active.id && targetNote.category === activeNote.category) {
+      mergeNotes(String(active.id), targetNote.id);
+      console.log(`Merged ${activeNote.title} into ${targetNote.title} (Category: ${activeNote.category})`);
+    } else {
+      // 一致するノートがなければ、通常通り移動または追加
       if (isPending) {
-        // PendingDrawer から Board への移動
-        // delta.x, delta.y はドラッグ開始地点（ドロワー内）からの相対距離
-        // 本来はマウスの絶対座標から Board 内の相対座標を出すべきだが、
-        // 簡易的に delta を使って「ドロップされた場所」を推定する
-        // または、PointerSensor の座標を使用する。
-        
-        // 暫定：Drawerは右側にあるので、delta.x は負の値になるはず。
-        // Board の左上を (0,0) とした場合の座標計算が必要。
-        // ここでは一旦、画面中央付近に配置するか、
-        // delta を使って計算（ただし基準が不明確）
-        
-        // より正確には: active.rect.current.translated を使う
-        const rect = active.rect.current.translated;
-        if (rect) {
-          const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
-          const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
-          moveToBoard(String(active.id), xPct, yPct);
-        }
+        moveToBoard(String(active.id), xPct, yPct);
       } else {
-        // Board 内での移動
-        const note = notes.find((n) => n.id === active.id);
-        if (note) {
-          const dxPct = pixelsToPercentage(delta.x, containerDimensions.width);
-          const dyPct = pixelsToPercentage(delta.y, containerDimensions.height);
-          const newX = note.x + dxPct;
-          const newY = note.y + dyPct;
-          updateNotePositionAndStatus(String(active.id), newX, newY);
-        }
+        updateNotePositionAndStatus(String(active.id), xPct, yPct);
       }
     }
-  }
-  return { notes, handleDragEnd };
+  }, [containerDimensions, notes, pendingNotes, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
+
+  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd };
 }
