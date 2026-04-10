@@ -19,6 +19,22 @@ describe('useStore', () => {
     expect(notes[notes.length - 1].title).toBe('Test Note');
   });
 
+  it('should add a note to pending when status is pending', () => {
+    const { addNote } = useStore.getState();
+    const initialNotesCount = useStore.getState().notes.length;
+    const initialPendingCount = useStore.getState().pendingNotes.length;
+
+    addNote('Pending Test Note', 'Pending Content', 'social', 'pending');
+
+    // notes 配列は変わらない
+    expect(useStore.getState().notes.length).toBe(initialNotesCount);
+    // pendingNotes 配列に追加される
+    expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount + 1);
+    const addedNote = useStore.getState().pendingNotes[0]; // 先頭に追加される
+    expect(addedNote.title).toBe('Pending Test Note');
+    expect(addedNote.status).toBe('pending');
+  });
+
   it('should update note position', () => {
     const { notes, updateNotePositionAndStatus } = useStore.getState();
     const noteId = notes[0].id;
@@ -90,7 +106,7 @@ describe('useStore', () => {
     moveToBoard(pendingNote.id, 20, 30);
     expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount);
     expect(useStore.getState().notes.length).toBe(initialNotesCount + 1);
-    
+
     const boardNote = useStore.getState().notes.find(n => n.id === pendingNote.id);
     expect(boardNote?.status).toBe('can'); // (20, 30) is 'can' quadrant
     expect(boardNote?.x).toBe(20);
@@ -122,11 +138,11 @@ describe('useStore', () => {
 
   it('should merge two notes', () => {
     const { addNote, addPendingNote, mergeNotes } = useStore.getState();
-    
+
     // Board note
     addNote('Target Note', 'Original Content', 'health', 'can');
     const targetNote = useStore.getState().notes.find(n => n.title === 'Target Note')!;
-    
+
     // Pending note (source)
     addPendingNote('Source Note', 'Source Content', 'food');
     const sourceNote = useStore.getState().pendingNotes.find(n => n.title === 'Source Note')!;
@@ -137,7 +153,7 @@ describe('useStore', () => {
     expect(updatedTarget.content).toContain('Original Content');
     expect(updatedTarget.content).toContain('Source Content');
     expect(updatedTarget.content).toContain('Merged from: Source Note');
-    
+
     // Source should be deleted
     expect(useStore.getState().pendingNotes.find(n => n.id === sourceNote.id)).toBeUndefined();
     expect(useStore.getState().notes.find(n => n.id === sourceNote.id)).toBeUndefined();

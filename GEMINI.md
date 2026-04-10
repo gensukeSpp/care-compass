@@ -42,8 +42,9 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] **Pending Box Drawer:** Implementation of a sliding drawer for notes (ready for Keep/MD integration).
 - [x] **Markdown File Import:** Basic support for dropping `.md` files to create board notes (via `useDropMdFile`).
 - [x] **Merge Pending Note with Existing Board Note (Issue #7):** Implement logic to append content when a pending note is dropped on an existing board note.
+- [x] **Pending Box Improvements (Issue #12):** Prepend new notes to Pending Box and support direct addition from form.
 - [ ] **Rich Editor:** Integrate `react-simplemde-editor` for better Markdown editing experience.
-- [ ] **Category Polish:** Ensure icons (🏠, 🍱, 💪, 💊, 🧑‍🤝‍🧑) are consistently used in StickyNotes and Modal.
+- [x] **Category Polish:** Ensure icons (🏠, 🍱, 💪, 💊, 🧑‍🤝‍🧑) are consistently used in StickyNotes and Modal.
 
 ### Phase 3: Advanced Features & Integration
 - [x] **Markdown Batch Import (1):** Structural split by headers & Multi-file drop support.

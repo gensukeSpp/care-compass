@@ -89,24 +89,30 @@ export const useStore = create<BoardState>()(
 					}
 				}),
 			addNote: (title, content, category, status) =>
-				set((state) => ({
-					notes: [
-						...state.notes,
-						createNote(title, content, category, status)
-					],
-				})),
+				set((state) => {
+					const newNote = createNote(title, content, category, status);
+					if (status === 'pending') {
+						return {
+							pendingNotes: [newNote, ...state.pendingNotes]
+						};
+					} else {
+						return {
+							notes: [...state.notes, newNote]
+						};
+					}
+				}),
 			addPendingNote: (title, content, category) =>
 				set((state) => ({
 					pendingNotes: [
-						...state.pendingNotes,
-						createNote(title, content, category, 'pending')
+						createNote(title, content, category, 'pending'),
+						...state.pendingNotes
 					],
 				})),
 			addPendingNotes: (newNotes) =>
 				set((state) => ({
 					pendingNotes: [
-						...state.pendingNotes,
-						...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending'))
+						...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending')),
+						...state.pendingNotes
 					],
 				})),
 			updateNote: (id, updates) =>
@@ -151,7 +157,7 @@ export const useStore = create<BoardState>()(
 					if (newStatus === 'pending') {
 						return {
 							notes: state.notes.filter(n => n.id !== id),
-							pendingNotes: [...state.pendingNotes.filter(n => n.id !== id), updatedNote]
+							pendingNotes: [updatedNote, ...state.pendingNotes.filter(n => n.id !== id)]
 						};
 					} else {
 						return {
