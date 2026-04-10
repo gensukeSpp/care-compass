@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { type DragEndEvent, type DragStartEvent, type UniqueIdentifier } from "@dnd-kit/core";
 import { useStore } from "../store/useStore";
 import { pixelsToPercentage, getQuadrantFromPosition } from '../utils/positionUtils';
@@ -23,33 +23,62 @@ export const useBoardLogic = () => {
 
     const isPending = activeData.type === 'pending-note';
     const activeNote = isPending ? activeData.note : notes.find(n => n.id === active.id);
-    
+
     if (!activeNote) return;
 
-    // ドロップ位置（絶対座標）を取得
+    // ドロップ位置（絶対座標）を取得（ノート自体の rect）
     const rect = active.rect.current.translated;
     if (!rect) return;
 
     // ボード上の%座標に変換
     // 注意: BoardがViewport全体(0,0)から始まっている前提
-    const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
-    const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
+    // const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
+    // const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
+
+    // ボード要素のビューポート相対座標を取得
+    const boardElement = document.querySelector<HTMLElement>('.four-quadrant-board');
+    if (!boardElement) return;
+    const boardRect = boardElement.getBoundingClientRect();
+    if (boardRect.width === 0 || boardRect.height === 0) return;
+
+    // ノートの中心座標（ビューポート基準）
+    const noteCenterX = rect.left + rect.width / 2;
+    const noteCenterY = rect.top + rect.height / 2;
+
+    // ボード左上を原点としたローカル座標に変換
+    const localX = noteCenterX - boardRect.left;
+    const localY = noteCenterY - boardRect.top;
+
+    // ボード領域外に出ている場合はクランプ
+    const clampedX = Math.min(Math.max(localX, 0), boardRect.width);
+    const clampedY = Math.min(Math.max(localY, 0), boardRect.height);
+
+    // ボード内の%座標に変換
+    const xPct = pixelsToPercentage(clampedX, boardRect.width);
+    const yPct = pixelsToPercentage(clampedY, boardRect.height);
+
+    console.log(
+      `Note center (viewport): (${noteCenterX}, ${noteCenterY}), ` +
+      `Board rect: left=${boardRect.left}, top=${boardRect.top}, width=${boardRect.width}, height=${boardRect.height}, ` +
+      `Local: (${localX}, ${localY}), Clamped: (${clampedX}, ${clampedY}), Percent: (${xPct}%, ${yPct}%)`
+    );
+
     const targetQuadrant = getQuadrantFromPosition(xPct, yPct);
 
     // 1. 直接他のノートの上にドロップしたかチェック (dnd-kitの over を利用)
     // 2. もしくは、ドロップ先の象限に同じカテゴリーのノートがあるかチェック (自動マージ要件)
     const overId = over?.id;
     let targetNote = notes.find(n => n.id === overId);
-    
+
     // もし直接ノートの上でない場合、その象限にある同じカテゴリーのノートを探す
     if (!targetNote || targetNote.category !== activeNote.category) {
-      targetNote = notes.find(n => 
-        n.id !== active.id && 
-        n.status === targetQuadrant && 
+      targetNote = notes.find(n =>
+        n.id !== active.id &&
+        n.status === targetQuadrant &&
         n.category === activeNote.category
       );
     }
-    
+
     // カテゴリーが一致し、自分自身でない場合にのみマージ
     if (targetNote && targetNote.id !== active.id && targetNote.category === activeNote.category) {
       mergeNotes(String(active.id), targetNote.id);

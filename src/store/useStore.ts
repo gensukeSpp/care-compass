@@ -242,8 +242,9 @@ export const useStore = create<BoardState>()(
 					if (!source || !target) return state;
 
 					// 内容を追記
-					const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toLocaleDateString()})\n${source.content}`;
-					
+					// データのポータビリティと一貫性のために、ISO 8601 形式（toISOString()）
+					const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toISOString()})\n${source.content}`;
+
 					const newHistoryEntry = {
 						from: source.status,
 						to: target.status,
@@ -271,7 +272,7 @@ export const useStore = create<BoardState>()(
 			closeAddForm: () => set({ isAddFormOpen: false, draftContent: '' }),
 			setDraftContent: (content) => set({ draftContent: content }),
 		}),
-		{ 
+		{
 			name: 'care-board-storage',
 			version: 1, // バージョンを上げる
 			migrate: (persistedState: any, version: number) => {
@@ -280,8 +281,8 @@ export const useStore = create<BoardState>()(
 					// pendingNotes が空、または存在しないなら初期データを注入する
 					return {
 						...persistedState,
-						pendingNotes: (persistedState.pendingNotes && persistedState.pendingNotes.length > 0) 
-							? persistedState.pendingNotes 
+						pendingNotes: (persistedState.pendingNotes && persistedState.pendingNotes.length > 0)
+							? persistedState.pendingNotes
 							: INITIAL_PENDING_NOTES
 					};
 				}

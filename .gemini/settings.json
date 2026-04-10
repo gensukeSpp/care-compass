@@ -7,5 +7,8 @@
   },
   "general": {
     "preferredEditor": "vscode"
+  },
+  "experimental": {
+    "skills": true
   }
 }

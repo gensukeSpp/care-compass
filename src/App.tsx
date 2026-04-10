@@ -36,14 +36,14 @@ function App() {
         <AddNoteForm />
         <Board />
         <PendingDrawer />
-        
+
         {/* ドラッグ中のプレビュー表示 */}
         <DragOverlay dropAnimation={null}>
           {activeId && activeNote ? (
-            <StickyNoteView 
-              title={activeNote.title} 
-              category={activeNote.category} 
-              isOverlay={true} 
+            <StickyNoteView
+              title={activeNote.title}
+              category={activeNote.category}
+              isOverlay={true}
             />
           ) : null}
         </DragOverlay>

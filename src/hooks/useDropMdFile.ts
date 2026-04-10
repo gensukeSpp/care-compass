@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore';
+import type { Category } from '../types';
 import { readMdFile } from '../utils/readMdFile';
 import { splitMdByHeader } from '../utils/splitMdByHeader';
 
@@ -11,18 +12,18 @@ export function useFileImport() {
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    
+
     // .md または .txt ファイルを対象とする
-    const targetFiles = files.filter(file => 
-      file.name.endsWith('.md') || 
+    const targetFiles = files.filter(file =>
+      file.name.endsWith('.md') ||
       file.name.endsWith('.txt') ||
-      file.type === 'text/markdown' || 
+      file.type === 'text/markdown' ||
       file.type === 'text/plain'
     );
 
     if (targetFiles.length === 0) return;
 
-    const allNewNotes: { title: string; content: string; category: any }[] = [];
+    const allNewNotes: { title: string; content: string; category: Category }[] = [];
 
     for (const file of targetFiles) {
       try {
@@ -30,12 +31,12 @@ export function useFileImport() {
         // ファイル名をデフォルトタイトルとして、見出しで分割
         const defaultTitle = file.name.replace(/\.(md|txt)$/, '');
         const splitNotes = splitMdByHeader(content, defaultTitle);
-        
+
         splitNotes.forEach(sn => {
           allNewNotes.push({
             title: sn.title,
             content: sn.content,
-            category: 'other' // デフォルトカテゴリ
+            category: 'house' // デフォルトカテゴリ
           });
         });
       } catch (error) {
