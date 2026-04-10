@@ -102,4 +102,44 @@ describe('useStore', () => {
     expect(useStore.getState().pendingNotes.length).toBe(initialPendingCount + 1);
     expect(useStore.getState().pendingNotes.find(n => n.id === pendingNote.id)?.status).toBe('pending');
   });
+
+  it('should handle multiple pending notes (batch add)', () => {
+    const { addPendingNotes } = useStore.getState();
+    const initialPendingCount = useStore.getState().pendingNotes.length;
+
+    const newNotes = [
+      { title: 'Batch Note 1', content: 'Content 1', category: 'health' as const },
+      { title: 'Batch Note 2', content: 'Content 2', category: 'food' as const },
+    ];
+
+    addPendingNotes(newNotes);
+
+    const pendingNotes = useStore.getState().pendingNotes;
+    expect(pendingNotes.length).toBe(initialPendingCount + 2);
+    expect(pendingNotes.some(n => n.title === 'Batch Note 1')).toBe(true);
+    expect(pendingNotes.some(n => n.title === 'Batch Note 2')).toBe(true);
+  });
+
+  it('should merge two notes', () => {
+    const { addNote, addPendingNote, mergeNotes } = useStore.getState();
+    
+    // Board note
+    addNote('Target Note', 'Original Content', 'health', 'can');
+    const targetNote = useStore.getState().notes.find(n => n.title === 'Target Note')!;
+    
+    // Pending note (source)
+    addPendingNote('Source Note', 'Source Content', 'food');
+    const sourceNote = useStore.getState().pendingNotes.find(n => n.title === 'Source Note')!;
+
+    mergeNotes(sourceNote.id, targetNote.id);
+
+    const updatedTarget = useStore.getState().notes.find(n => n.id === targetNote.id)!;
+    expect(updatedTarget.content).toContain('Original Content');
+    expect(updatedTarget.content).toContain('Source Content');
+    expect(updatedTarget.content).toContain('Merged from: Source Note');
+    
+    // Source should be deleted
+    expect(useStore.getState().pendingNotes.find(n => n.id === sourceNote.id)).toBeUndefined();
+    expect(useStore.getState().notes.find(n => n.id === sourceNote.id)).toBeUndefined();
+  });
 });

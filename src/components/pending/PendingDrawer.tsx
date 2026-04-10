@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { PendingNoteItem } from './PendingNoteItem';
+import { useFileImport } from '../../hooks/useDropMdFile';
 
 export const PendingDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { pendingNotes, selectNote } = useStore();
+  const { handleDrop } = useFileImport();
 
   return (
     <div
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
       className={`fixed top-0 right-0 h-full bg-gray-50 border-l shadow-2xl transition-transform duration-300 ease-in-out z-40 flex ${
         isOpen ? 'translate-x-0' : 'translate-x-[calc(100%-40px)]'
       }`}
