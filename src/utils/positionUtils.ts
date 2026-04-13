@@ -1,4 +1,5 @@
-import type { QuadrantId } from '../types';
+import type { ClientRect, Active } from '@dnd-kit/core';
+import type { Note, QuadrantId } from '../types';
 
 /**
  * Converts a pixel coordinate to a percentage relative to a container size.
@@ -49,3 +50,47 @@ export const calculateInitialPosition = (quadrant: QuadrantId) => {
       return { x: 40, y: 40 }; // neutral やその他のケース
   }
 };
+
+export const convertToBoardPercentages = (rect: ClientRect, targetRect: DOMRect) => {
+  // ボード上の%座標に変換
+  // 注意: BoardがViewport全体(0,0)から始まっている前提
+  // const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
+  // const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
+
+  // ノートの中心座標（ビューポート基準）
+  const noteCenterX = rect.left + rect.width / 2;
+  const noteCenterY = rect.top + rect.height / 2;
+
+  // ボード左上を原点としたローカル座標に変換
+  const localX = noteCenterX - targetRect.left;
+  const localY = noteCenterY - targetRect.top;
+
+  // ボード領域外に出ている場合はクランプ
+  const clampedX = Math.min(Math.max(localX, 0), targetRect.width);
+  const clampedY = Math.min(Math.max(localY, 0), targetRect.height);
+
+  // ボード内の%座標に変換
+  const xPct = pixelsToPercentage(clampedX, targetRect.width);
+  const yPct = pixelsToPercentage(clampedY, targetRect.height);
+
+  console.log(
+    `Note center (viewport): (${noteCenterX}, ${noteCenterY}), ` +
+    `Board rect: left=${targetRect.left}, top=${targetRect.top}, width=${targetRect.width}, height=${targetRect.height}, ` +
+    `Local: (${localX}, ${localY}), Clamped: (${clampedX}, ${clampedY}), Percent: (${xPct}%, ${yPct}%)`
+  );
+
+  return { x: xPct, y: yPct }
+}
+export const getActiveNoteInfo = (active: Active, notes: Note[]) => {
+  // データからタイプを判別
+  const activeData = active.data.current;
+  if (!activeData) return;
+
+  const isPending = activeData.type === 'pending-note';
+  const activeNote: Note = isPending ? activeData.note : notes.find(n => n.id === active.id);
+  if (!activeNote) return;
+
+  return { activeNote, isPending };
+}
+
+

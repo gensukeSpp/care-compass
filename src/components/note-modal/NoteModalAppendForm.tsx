@@ -19,7 +19,6 @@ export function NoteAppendWithTimestamp({ note, editContent }: NoteAppendProps) 
     setNewComment('');
     setIsAppending(false);
   };
-  console.log(isAppending);
 
   return (
     <div className="mt-6 border-t pt-6">

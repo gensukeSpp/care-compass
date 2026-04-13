@@ -1,14 +1,14 @@
 import { DndContext, useSensors, useSensor, MouseSensor, TouchSensor, DragOverlay } from '@dnd-kit/core';
 import { AddNoteForm } from './components/common/AddNoteForm';
 import { NoteModalTop } from './components/note-modal/NoteModal';
-import { Board } from './components/board/Board';
+import { BoardReference } from './components/board/BoardReference';
 import { PendingDrawer } from './components/pending/PendingDrawer';
 import { useContainerResize } from './hooks/useContainerResize';
-import { useBoardLogic } from './hooks/useDragOnBoard';
+import { useDragOnBoard } from './hooks/useDragOnBoard';
 import { StickyNoteView } from './components/sticky-note/StickyNoteView';
 
 function App() {
-  const { handleDragStart, handleDragEnd, activeId, notes, pendingNotes } = useBoardLogic();
+  const { handleDragStart, handleDragEnd, activeId, notes, pendingNotes, boardRef } = useDragOnBoard();
   useContainerResize();
 
   // センサーの設定: マウスとタッチでそれぞれ最適化
@@ -34,7 +34,7 @@ function App() {
       <div className="relative min-h-screen overflow-hidden">
         <NoteModalTop />
         <AddNoteForm />
-        <Board />
+        <BoardReference ref={boardRef} />
         <PendingDrawer />
 
         {/* ドラッグ中のプレビュー表示 */}
