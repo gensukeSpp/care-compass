@@ -1,15 +1,41 @@
 import { useState, useCallback, useRef } from "react";
-import { type DragEndEvent, type DragStartEvent, type UniqueIdentifier } from "@dnd-kit/core";
+import type { ClientRect, DragEndEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useStore } from "../store/useStore";
-import { pixelsToPercentage, getQuadrantFromPosition } from '../utils/positionUtils';
+import { pixelsToPercentage, getQuadrantFromPosition, convertToBoardPercentages, getActiveNoteInfo } from '../utils/positionUtils';
+import type { Note } from "../types";
 
-export const useBoardLogic = () => {
+export const useDragOnBoard = () => {
   const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, mergeNotes, containerDimensions } = useStore();
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id);
   }, []);
+
+  // 1. 幾何計算の責務を分離
+  const calculatePosition = useCallback((rect: ClientRect) => {
+    const boardElement = boardRef.current;
+    // const boardElement = document.querySelector<HTMLElement>('.four-quadrant-board');
+    if (!boardElement) return;
+    const boardRect = boardElement.getBoundingClientRect();
+    if (boardRect.width === 0 || boardRect.height === 0) return;
+
+    return convertToBoardPercentages(rect, boardRect);
+  }, [boardRef]);
+
+  // 2. マージ判定の責務を分離 (Store 側に持たせるのが理想的)
+  const findMergeTarget = useCallback((note: Note, x: number, y: number) => {
+    const targetQuadrant = getQuadrantFromPosition(x, y);
+
+    // もし直接ノートの上でない場合、その象限にある同じカテゴリーのノートを探す
+    // if (!targetNote || targetNote.category !== activeNote.category) {
+    return notes.find(n =>
+      n.id !== note.id &&
+      n.status === targetQuadrant &&
+      n.category === note.category
+    );
+  }, [notes]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -17,81 +43,43 @@ export const useBoardLogic = () => {
 
     if (containerDimensions.width === 0 || containerDimensions.height === 0) return;
 
-    // データからタイプを判別
-    const activeData = active.data.current;
-    if (!activeData) return;
-
-    const isPending = activeData.type === 'pending-note';
-    const activeNote = isPending ? activeData.note : notes.find(n => n.id === active.id);
-
-    if (!activeNote) return;
-
     // ドロップ位置（絶対座標）を取得（ノート自体の rect）
     const rect = active.rect.current.translated;
     if (!rect) return;
 
-    // ボード上の%座標に変換
-    // 注意: BoardがViewport全体(0,0)から始まっている前提
-    // const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
-    // const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
+    const pos = calculatePosition(rect);
+    if (!pos) return;
 
-    // ボード要素のビューポート相対座標を取得
-    const boardElement = document.querySelector<HTMLElement>('.four-quadrant-board');
-    if (!boardElement) return;
-    const boardRect = boardElement.getBoundingClientRect();
-    if (boardRect.width === 0 || boardRect.height === 0) return;
+    // const { activeNote, isPending } = getActiveNoteInfo(active, notes); // ヘルパー
+    const noteInfo = getActiveNoteInfo(active, notes); // ヘルパー
+    if (!noteInfo) return;
 
-    // ノートの中心座標（ビューポート基準）
-    const noteCenterX = rect.left + rect.width / 2;
-    const noteCenterY = rect.top + rect.height / 2;
-
-    // ボード左上を原点としたローカル座標に変換
-    const localX = noteCenterX - boardRect.left;
-    const localY = noteCenterY - boardRect.top;
-
-    // ボード領域外に出ている場合はクランプ
-    const clampedX = Math.min(Math.max(localX, 0), boardRect.width);
-    const clampedY = Math.min(Math.max(localY, 0), boardRect.height);
-
-    // ボード内の%座標に変換
-    const xPct = pixelsToPercentage(clampedX, boardRect.width);
-    const yPct = pixelsToPercentage(clampedY, boardRect.height);
-
-    console.log(
-      `Note center (viewport): (${noteCenterX}, ${noteCenterY}), ` +
-      `Board rect: left=${boardRect.left}, top=${boardRect.top}, width=${boardRect.width}, height=${boardRect.height}, ` +
-      `Local: (${localX}, ${localY}), Clamped: (${clampedX}, ${clampedY}), Percent: (${xPct}%, ${yPct}%)`
-    );
-
-    const targetQuadrant = getQuadrantFromPosition(xPct, yPct);
+    const { activeNote, isPending } = noteInfo;
 
     // 1. 直接他のノートの上にドロップしたかチェック (dnd-kitの over を利用)
     // 2. もしくは、ドロップ先の象限に同じカテゴリーのノートがあるかチェック (自動マージ要件)
-    const overId = over?.id;
-    let targetNote = notes.find(n => n.id === overId);
-
-    // もし直接ノートの上でない場合、その象限にある同じカテゴリーのノートを探す
-    if (!targetNote || targetNote.category !== activeNote.category) {
-      targetNote = notes.find(n =>
-        n.id !== active.id &&
-        n.status === targetQuadrant &&
-        n.category === activeNote.category
-      );
-    }
+    // const overId = over?.id;
+    // let targetNote = notes.find(n => n.id === overId);
+    // targetNote = findMergeTarget(activeNote, pos.x, pos.y);
+    // ↓ は、移動先ノートか
+    // マージ判定
+    const targetNote = findMergeTarget(activeNote, pos.x, pos.y);
 
     // カテゴリーが一致し、自分自身でない場合にのみマージ
     if (targetNote && targetNote.id !== active.id && targetNote.category === activeNote.category) {
-      mergeNotes(String(active.id), targetNote.id);
-      console.log(`Merged ${activeNote.title} into ${targetNote.title} (Category: ${activeNote.category})`);
+      if (window.confirm('付箋内容を合成しますか(タイトルは移動先のものになります)？')) {
+        mergeNotes(String(active.id), targetNote.id);
+        console.log(`Merged ${activeNote.title} into ${targetNote.title} (Category: ${activeNote.category})`);
+      }
     } else {
       // 一致するノートがなければ、通常通り移動または追加
       if (isPending) {
-        moveToBoard(String(active.id), xPct, yPct);
+        moveToBoard(String(active.id), pos.x, pos.y);
       } else {
-        updateNotePositionAndStatus(String(active.id), xPct, yPct);
+        updateNotePositionAndStatus(String(active.id), pos.x, pos.y);
       }
     }
   }, [containerDimensions, notes, pendingNotes, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
 
-  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd };
+  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, boardRef };
 }
