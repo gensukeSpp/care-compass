@@ -50,7 +50,8 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] **Markdown Batch Import (1):** Structural split by headers & Multi-file drop support.
 - [ ] **Markdown Batch Import (2):** Keyword-based automatic classification (Category/Status).
 - [ ] **Markdown Batch Import (3):** AI-enhanced context analysis & summarization.
-- [ ] **Google Keep Integration:** Implementation of OAuth 2.0 and API sync to fetch notes into Pending Box.
+- [x] **Google Keep Integration (Auth):** Implementation of OAuth 2.0 and session management (Zustand + Cloudflare Workers).
+- [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box.
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
 - [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
 - [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.
@@ -61,6 +62,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 src/
 ├── assets/             # Images, Icons, Global CSS
 ├── components/         # UI Components
+│   ├── auth/           # Login/Logout Buttons
 │   ├── common/         # Buttons, Forms, Modals
 │   ├── board/          # Board, Grid, Quadrants
 │   ├── sticky-note/    # Sticky Note item
@@ -68,10 +70,12 @@ src/
 │   └── pending/        # Pending Box Drawer, Import items
 ├── hooks/              # D&D Logic, File Import, Resize handling
 ├── lib/                # External Lib Configs
+├── pages/              # AuthCallback page
 ├── services/           # Google Keep API, AI Services, External Sync
-├── store/              # Zustand Store (State Management)
+├── store/              # Zustand Store (State Management, Auth Store)
 ├── types/              # TypeScript Definitions
 ├── utils/              # Coordinate Calc, Date Formatting, MD Splitting
+├── workers/            # Cloudflare Workers (Auth API)
 ├── App.tsx             # Main Layout & Drag Context
 └── main.tsx            # Entry point
 ```

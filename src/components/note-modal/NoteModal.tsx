@@ -31,6 +31,7 @@ export function NoteModalTop() {
         categoryLabel={categoryLabels[note.category]}
         noteTitle={note.title}
         editTitle={editTitle}
+        authorName={note.authorName}
         setEditTitle={setEditTitle}
         selectNote={selectNote}
       />
