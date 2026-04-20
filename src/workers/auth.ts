@@ -3,6 +3,7 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { randomBytes, randomUUID } from 'crypto';
 
 console.log('Worker script loaded');
 
@@ -10,6 +11,7 @@ interface Env {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REDIRECT_URI: string;
+  ALLOW_ORIGIN: string;
   JWT_SECRET: string; // ⚠️ secretとして設定されている必要がある
   ASSETS: { fetch: typeof fetch };
 }
@@ -63,7 +65,7 @@ export default {
       return new Response(null, {
         status: 204,
         headers: {
-          'Access-Control-Allow-Origin': 'http://localhost:5173',
+          'Access-Control-Allow-Origin': env.ALLOW_ORIGIN,
           'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
@@ -83,6 +85,16 @@ export default {
 };
 
 /**
+ * 方法A: 推奨されるトークン生成 (32バイトのランダム値)
+ * URLセーフなBase64形式で出力
+ */
+export const generateStateToken = (): string => {
+  // return randomBytes(32).toString('urlsafe').replace(/[=]/g, ''); 
+  // ※Node.js 14.18+ / 16.0+ なら 'base64url' が直接使えます
+  return randomBytes(32).toString('base64url');
+};
+
+/**
  * Google OAuth 認可 URL へリダイレクトします。
  * @params
  *  env :Env - 環境変数
@@ -90,6 +102,7 @@ export default {
  */
 function handleGoogleAuth(env: Env): Response {
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  const state = generateStateToken(); // 毎回新しく生成
   const options = {
     redirect_uri: env.GOOGLE_REDIRECT_URI,
     client_id: env.GOOGLE_CLIENT_ID,
@@ -101,11 +114,17 @@ function handleGoogleAuth(env: Env): Response {
       'https://www.googleapis.com/auth/userinfo.email',
       // 'https://www.googleapis.com/auth/keep.readonly', // Keep API利用を想定
     ].join(' '),
-    state: 'random_state_string', // 本来は動的に生成しCookie等で検証すべき
+    state: state, // 本来は動的に生成しCookie等で検証すべき
   };
 
-  const qs = new URLSearchParams(options).toString();
-  return Response.redirect(`${rootUrl}?${qs}`, 302);
+  // const qs = new URLSearchParams(options).toString();
+  const qs = new URLSearchParams({ ...options, state }).toString();
+  const headers = new Headers();
+  headers.append('Location', `${rootUrl}?${qs}`);
+  // 一時的なCookieにstateを保存 (有効期限は短くて良い。ここでは10分)
+  headers.append('Set-Cookie', `auth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`);
+  // return Response.redirect(`${rootUrl}?${qs}`, 302);
+  return new Response(null, { status: 302, headers });
 }
 
 /**
@@ -118,8 +137,18 @@ function handleGoogleAuth(env: Env): Response {
 async function handleGoogleCallback(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  // console.log(`${import.meta.env.VITE_API_TITLE}`);
-  console.log(`${JSON.stringify(env)}`);
+  const stateInUrl = url.searchParams.get('state');
+
+  // Cookieから保存されたstateを取得
+  const cookie = request.headers.get('Cookie') || '';
+  const stateMatch = cookie.match(/auth_state=([^;]+)/);
+  console.log(`State in Cookie: ${stateMatch}`);
+  const storedState = stateMatch ? stateMatch[1] : null;
+
+  // 保存しておいたstateと一致するか厳密にチェック
+  if (!stateInUrl || !storedState || stateInUrl !== storedState) {
+    return new Response('CSRF攻撃の可能性があります。', { status: 403 });
+  }
 
   if (!code) {
     return new Response('Code not found', { status: 400 });
@@ -152,6 +181,10 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   const user = await userRes.json() as GoogleUser;
 
   // セッション JWT 作成
+  if (!env.JWT_SECRET) {
+    return new Response('⚠️ JWT_SECRET is not set in environment variables.', { status: 500 });
+  }
+
   const sessionToken = jwt.sign(
     {
       id: user.id,
@@ -159,7 +192,7 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
       name: user.name,
       picture: user.picture,
     },
-    env.JWT_SECRET || 'fallback-secret', // ⚠️ JWT_SECRETがない場合のフォールバック（本番ではNG）
+    env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 
@@ -172,6 +205,8 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   }
 
   headers.append('Location', '/');
+  // 成功時のレスポンスヘッダーに、auth_state Cookieの削除を追加
+  headers.append('Set-Cookie', 'auth_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
   return new Response(null, { status: 302, headers });
 }
 
@@ -187,12 +222,12 @@ function handleLogout(): Response {
   return new Response(null, { status: 302, headers });
 }
 
-function createCorsHeaders() {
+function createCorsHeaders(allow_url: string) {
   return {
-    'Access-Control-Allow-Origin': 'http://localhost:5173',
+    'Access-Control-Allow-Origin': allow_url,
     'Access-Control-Allow-Credentials': 'true',
     'Content-Type': 'application/json',
-    'credentials': 'include'
+    // 'credentials': 'include'
   };
 }
 
@@ -205,18 +240,18 @@ function createCorsHeaders() {
  */
 async function handleMe(request: Request, env: Env): Promise<Response> {
   const cookie = request.headers.get('Cookie');
-  if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(), });
+  if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
   const sessionMatch = cookie.match(/session=([^;]+)/);
-  if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(), });
+  if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
   try {
-    const decoded = jwt.verify(sessionMatch[1], env.JWT_SECRET || 'fallback-secret');
+    const decoded = jwt.verify(sessionMatch[1], env.JWT_SECRET) as GoogleUser;
     return new Response(JSON.stringify({ user: decoded }), {
       status: 200,
-      headers: createCorsHeaders(),
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
     });
   } catch (_e) {
-    return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: createCorsHeaders(), });
+    return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
   }
 }
