@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Category, QuadrantId, Note } from '../types/index';
 import { getQuadrantFromPosition } from '../utils/positionUtils';
 import { INITIAL_NOTE, INITIAL_PENDING_NOTES } from './initialData';
+import { useAuthStore } from './useAuthStore';
 
 interface BoardState {
 	notes: Note[];
@@ -33,7 +34,7 @@ interface BoardState {
 	mergeNotes: (sourceId: string, targetId: string) => void; // 追加
 }
 
-function createNote(title: string, content: string, category: Category, status: QuadrantId): Note {
+function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string): Note {
 	let x = 5;
 	let y = 5;
 
@@ -58,6 +59,7 @@ function createNote(title: string, content: string, category: Category, status: 
 		content,
 		category,
 		status,
+		authorName,
 		x,
 		y,
 		updatedAt: new Date().toISOString(),
@@ -78,19 +80,21 @@ export const useStore = create<BoardState>()(
 				set((state) => {
 					// notes か pendingNotes のどちらかにあるか探して更新
 					const isInNotes = state.notes.some(n => n.id === id);
+					const authorName = useAuthStore.getState().currentUser?.name;
 					if (isInNotes) {
 						return {
-							notes: state.notes.map((n) => (n.id === id ? { ...n, content } : n))
+							notes: state.notes.map((n) => (n.id === id ? { ...n, content, authorName } : n))
 						};
 					} else {
 						return {
-							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, content } : n))
+							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, content, authorName } : n))
 						};
 					}
 				}),
 			addNote: (title, content, category, status) =>
 				set((state) => {
-					const newNote = createNote(title, content, category, status);
+					const authorName = useAuthStore.getState().currentUser?.name;
+					const newNote = createNote(title, content, category, status, authorName);
 					if (status === 'pending') {
 						return {
 							pendingNotes: [newNote, ...state.pendingNotes]
@@ -102,19 +106,25 @@ export const useStore = create<BoardState>()(
 					}
 				}),
 			addPendingNote: (title, content, category) =>
-				set((state) => ({
-					pendingNotes: [
-						createNote(title, content, category, 'pending'),
-						...state.pendingNotes
-					],
-				})),
+				set((state) => {
+					const authorName = useAuthStore.getState().currentUser?.name;
+					return {
+						pendingNotes: [
+							createNote(title, content, category, 'pending', authorName),
+							...state.pendingNotes
+						],
+					};
+				}),
 			addPendingNotes: (newNotes) =>
-				set((state) => ({
-					pendingNotes: [
-						...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending')),
-						...state.pendingNotes
-					],
-				})),
+				set((state) => {
+					const authorName = useAuthStore.getState().currentUser?.name;
+					return {
+						pendingNotes: [
+							...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending', authorName)),
+							...state.pendingNotes
+						],
+					};
+				}),
 			updateNote: (id, updates) =>
 				set((state) => {
 					const isInNotes = state.notes.some(n => n.id === id);

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, User } from 'lucide-react';
 
 interface NoteHeaderProps {
   isEditing: boolean;
@@ -6,11 +6,12 @@ interface NoteHeaderProps {
   categoryLabel: string;
   noteTitle: string;
   editTitle: string;
+  authorName?: string;
   setEditTitle: (title: string) => void;
   selectNote: (noteId: string | null) => void;
 }
 
-export const NoteHeader = ({ isEditing, isPending, categoryLabel, noteTitle, editTitle, setEditTitle, selectNote }: NoteHeaderProps) => {
+export const NoteHeader = ({ isEditing, isPending, categoryLabel, noteTitle, editTitle, authorName, setEditTitle, selectNote }: NoteHeaderProps) => {
   return (
     <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
       <div className="flex-1">
@@ -23,13 +24,21 @@ export const NoteHeader = ({ isEditing, isPending, categoryLabel, noteTitle, edi
             autoFocus
           />
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{categoryLabel.split(' ')[0]}</span>
-            <h2 className="font-bold text-xl text-gray-800">{noteTitle}</h2>
-            {isPending && (
-              <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-semibold">
-                保留中
-              </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{categoryLabel.split(' ')[0]}</span>
+              <h2 className="font-bold text-xl text-gray-800">{noteTitle}</h2>
+              {isPending && (
+                <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-semibold">
+                  保留中
+                </span>
+              )}
+            </div>
+            {authorName && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <User size={12} />
+                <span>{authorName}</span>
+              </div>
             )}
           </div>
         )}

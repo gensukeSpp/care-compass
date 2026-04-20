@@ -1,5 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useStore } from './useStore';
+import { useAuthStore } from './useAuthStore';
+
+// useAuthStore をモックする
+vi.mock('./useAuthStore', () => ({
+  useAuthStore: {
+    getState: vi.fn(() => ({
+      currentUser: { name: 'Test Author' }
+    }))
+  }
+}));
 
 describe('useStore', () => {
   beforeEach(() => {
@@ -157,5 +167,43 @@ describe('useStore', () => {
     // Source should be deleted
     expect(useStore.getState().pendingNotes.find(n => n.id === sourceNote.id)).toBeUndefined();
     expect(useStore.getState().notes.find(n => n.id === sourceNote.id)).toBeUndefined();
+  });
+
+  it('should add a note with authorName if logged in', () => {
+    const { addNote } = useStore.getState();
+    addNote('Auth Note', 'Content', 'health', 'can');
+
+    const notes = useStore.getState().notes;
+    const addedNote = notes[notes.length - 1];
+    expect(addedNote.authorName).toBe('Test Author');
+  });
+
+  it('should update note content and authorName', () => {
+    const { addNote, updateNoteContent } = useStore.getState();
+    addNote('Initial Note', 'Initial Content', 'health', 'can');
+    const noteId = useStore.getState().notes.slice(-1)[0].id;
+
+    // 作者名を変更してモックを更新
+    (useAuthStore.getState as any).mockReturnValue({
+      currentUser: { name: 'Second Author' }
+    });
+
+    updateNoteContent(noteId, 'Updated Content');
+
+    const updatedNote = useStore.getState().notes.find(n => n.id === noteId);
+    expect(updatedNote?.content).toBe('Updated Content');
+    expect(updatedNote?.authorName).toBe('Second Author');
+  });
+
+  it('should add a pending note with authorName', () => {
+    (useAuthStore.getState as any).mockReturnValue({
+      currentUser: { name: 'Pending Author' }
+    });
+    const { addPendingNote } = useStore.getState();
+
+    addPendingNote('Pending Auth', 'Content', 'social');
+
+    const addedNote = useStore.getState().pendingNotes[0];
+    expect(addedNote.authorName).toBe('Pending Author');
   });
 });

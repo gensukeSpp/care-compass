@@ -1,54 +1,54 @@
-import { DndContext, useSensors, useSensor, MouseSensor, TouchSensor, DragOverlay } from '@dnd-kit/core';
-import { AddNoteForm } from './components/common/AddNoteForm';
-import { NoteModalTop } from './components/note-modal/NoteModal';
-import { BoardReference } from './components/board/BoardReference';
-import { PendingDrawer } from './components/pending/PendingDrawer';
-import { useContainerResize } from './hooks/useContainerResize';
-import { useDragOnBoard } from './hooks/useDragOnBoard';
-import { StickyNoteView } from './components/sticky-note/StickyNoteView';
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { useAuthStore } from './store/useAuthStore';
+import { LoginButton } from './components/auth/LoginButton';
+import { LogoutButton } from './components/auth/LogoutButton';
+import { AuthCallback } from './pages/AuthCallback';
+import { BoardPage } from './components/board/BoardPage';
 
+/**
+ * アプリケーションのルートコンポーネント
+ */
 function App() {
-  const { handleDragStart, handleDragEnd, activeId, notes, pendingNotes, boardRef } = useDragOnBoard();
-  useContainerResize();
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
-  // センサーの設定: マウスとタッチでそれぞれ最適化
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    })
-  );
-
-  // ドラッグ中のノート情報を取得
-  const activeNote = notes.find(n => n.id === activeId) || pendingNotes.find(n => n.id === activeId);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="relative min-h-screen overflow-hidden">
-        <NoteModalTop />
-        <AddNoteForm />
-        <BoardReference ref={boardRef} />
-        <PendingDrawer />
+    <div className="min-h-screen flex flex-col">
+      {/* 共通ヘッダー */}
+      <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 z-50">
+        <h1 className="text-xl font-bold text-gray-800">Care Compass</h1>
+        <div className="flex items-center gap-4">
+          {isLoggedIn && currentUser ? (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-700">{currentUser.name}</p>
+                <p className="text-xs text-gray-400">{currentUser.email}</p>
+              </div>
+              {currentUser.picture && (
+                <img src={currentUser.picture} alt={currentUser.name} className="w-8 h-8 rounded-full border border-gray-200" />
+              )}
+              <LogoutButton />
+            </div>
+          ) : (
+            <LoginButton />
+          )}
+        </div>
+      </header>
 
-        {/* ドラッグ中のプレビュー表示 */}
-        <DragOverlay dropAnimation={null}>
-          {activeId && activeNote ? (
-            <StickyNoteView
-              title={activeNote.title}
-              category={activeNote.category}
-              isOverlay={true}
-            />
-          ) : null}
-        </DragOverlay>
-      </div>
-    </DndContext>
+      {/* メインコンテンツエリア */}
+      <main className="flex-1 relative overflow-hidden">
+        <Routes>
+          <Route path="/" element={<BoardPage />} />
+          <Route path="/auth/google/callback" element={<AuthCallback />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 

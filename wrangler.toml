@@ -1,9 +1,16 @@
 name = "care-compass"
 # Set this to today's date
 compatibility_date = "2026-03-31"
+compatibility_flags = ["nodejs_compat"] # nodejs_compat_v2として認識される
 
+main = "src/workers/auth.ts"
 workers_dev = false
 
 [assets]
 directory = "./dist"
 not_found_handling = "single-page-application"
+
+[env.development]
+vars = { GOOGLE_CLIENT_ID = "YOUR_DEV_CLIENT_ID", GOOGLE_REDIRECT_URI = "http://localhost:5173/auth/google/callback" }
+[env.production]
+vars = { GOOGLE_CLIENT_ID = "YOUR_PROD_CLIENT_ID", GOOGLE_REDIRECT_URI = "https://care-compass.example.com/auth/google/callback" }
