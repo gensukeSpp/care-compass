@@ -215,6 +215,25 @@ describe('useStore', () => {
     expect(addedNote.authorName).toBe('Pending Author');
   });
 
+  it('should handle multiple pending notes with googleTaskId (batch add)', () => {
+    const { addPendingNotes } = useStore.getState();
+    const initialPendingCount = useStore.getState().pendingNotes.length;
+
+    const newNotes = [
+      { title: 'Batch Note 1', content: 'Content 1', category: 'health' as const, googleTaskId: 'gtask-1' },
+      { title: 'Batch Note 2', content: 'Content 2', category: 'food' as const, googleTaskId: 'gtask-2' },
+    ];
+
+    addPendingNotes(newNotes);
+
+    const pendingNotes = useStore.getState().pendingNotes;
+    expect(pendingNotes.length).toBe(initialPendingCount + 2);
+    const note1 = pendingNotes.find(n => n.title === 'Batch Note 1');
+    const note2 = pendingNotes.find(n => n.title === 'Batch Note 2');
+    expect(note1?.googleTaskId).toBe('gtask-1');
+    expect(note2?.googleTaskId).toBe('gtask-2');
+  });
+
   it('should sync tasks and handle deduplication', async () => {
     const { syncTasks, addPendingNote } = useStore.getState();
     
