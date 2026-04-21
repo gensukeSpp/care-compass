@@ -23,4 +23,5 @@ export interface Note {
   x: number;
   y: number;
   history?: History[];
+  googleTaskId?: string;
 }

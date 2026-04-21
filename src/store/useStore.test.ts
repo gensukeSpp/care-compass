@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useStore } from './useStore';
 import { useAuthStore } from './useAuthStore';
+import { tasksSyncService } from '../services/tasksSyncService';
+
+// tasksSyncService をモックする
+vi.mock('../services/tasksSyncService', () => ({
+  tasksSyncService: {
+    fetchTasks: vi.fn()
+  }
+}));
 
 // useAuthStore をモックする
 vi.mock('./useAuthStore', () => ({
@@ -205,5 +213,31 @@ describe('useStore', () => {
 
     const addedNote = useStore.getState().pendingNotes[0];
     expect(addedNote.authorName).toBe('Pending Author');
+  });
+
+  it('should sync tasks and handle deduplication', async () => {
+    const { syncTasks, addPendingNote } = useStore.getState();
+    
+    // すでに存在する googleTaskId を持つノートを追加
+    addPendingNote('Existing Task', 'Content', 'house');
+    const existingNote = useStore.getState().pendingNotes[0];
+    useStore.setState({
+      pendingNotes: [{ ...existingNote, googleTaskId: 'task-1' }]
+    });
+
+    // モックデータ: 1つは既存、1つは新規
+    const mockTasks = [
+      { googleTaskId: 'task-1', title: 'Task 1', notes: 'Notes 1', updated: '2024-01-01' },
+      { googleTaskId: 'task-2', title: 'Task 2', notes: 'Notes 2', updated: '2024-01-02' },
+    ];
+
+    vi.mocked(tasksSyncService.fetchTasks).mockResolvedValue(mockTasks);
+
+    await syncTasks();
+
+    const pendingNotes = useStore.getState().pendingNotes;
+    // 重複した 'task-1' は追加されず、'task-2' のみが追加されるはず
+    expect(pendingNotes.some(n => n.googleTaskId === 'task-2')).toBe(true);
+    expect(pendingNotes.filter(n => n.googleTaskId === 'task-1').length).toBe(1);
   });
 });

@@ -6,6 +6,7 @@ import type { Category, QuadrantId, Note } from '../types/index';
 import { getQuadrantFromPosition } from '../utils/positionUtils';
 import { INITIAL_NOTE, INITIAL_PENDING_NOTES } from './initialData';
 import { useAuthStore } from './useAuthStore';
+import { tasksSyncService } from '../services/tasksSyncService';
 
 interface BoardState {
 	notes: Note[];
@@ -32,9 +33,10 @@ interface BoardState {
 	moveToPending: (id: string) => void; // 追加
 	moveToBoard: (id: string, x: number, y: number) => void; // 追加
 	mergeNotes: (sourceId: string, targetId: string) => void; // 追加
+	syncTasks: () => Promise<void>; // 追加
 }
 
-function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string): Note {
+function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string, googleTaskId?: string): Note {
 	let x = 5;
 	let y = 5;
 
@@ -60,6 +62,7 @@ function createNote(title: string, content: string, category: Category, status: 
 		category,
 		status,
 		authorName,
+		googleTaskId,
 		x,
 		y,
 		updatedAt: new Date().toISOString(),
@@ -281,6 +284,35 @@ export const useStore = create<BoardState>()(
 						selectedNoteId: state.selectedNoteId === sourceId ? targetId : state.selectedNoteId
 					};
 				});
+			},
+			syncTasks: async () => {
+				const { pendingNotes, notes } = useStore.getState();
+				const authorName = useAuthStore.getState().currentUser?.name;
+
+				try {
+					const tasks = await tasksSyncService.fetchTasks();
+					
+					// 重複排除: すでに notes または pendingNotes に存在する googleTaskId を除外
+					const existingGoogleTaskIds = new Set([
+						...notes.map(n => n.googleTaskId).filter(Boolean),
+						...pendingNotes.map(n => n.googleTaskId).filter(Boolean)
+					]);
+
+					const newTasks = tasks.filter(task => !existingGoogleTaskIds.has(task.googleTaskId));
+
+					if (newTasks.length === 0) return;
+
+					const newNotes = newTasks.map(task => 
+						createNote(task.title, task.notes, 'house', 'pending', authorName, task.googleTaskId)
+					);
+
+					set((state) => ({
+						pendingNotes: [...newNotes, ...state.pendingNotes]
+					}));
+				} catch (error) {
+					console.error('Failed to sync tasks:', error);
+					throw error;
+				}
 			},
 			isAddFormOpen: false,
 			draftContent: '',

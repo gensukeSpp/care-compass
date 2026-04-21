@@ -60,6 +60,10 @@ export default {
       console.log(`[Worker] Fetching current user`);
       return handleMe(request, env);
     }
+    if (path === '/api/tasks/sync') {
+      console.log(`[Worker] Syncing Google Tasks`);
+      return handleSyncTasks(request, env);
+    }
 
     if (request.method === 'OPTIONS' && path.startsWith('/api/')) {
       return new Response(null, {
@@ -112,9 +116,9 @@ function handleGoogleAuth(env: Env): Response {
     scope: [
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email',
-      // 'https://www.googleapis.com/auth/keep.readonly', // Keep API利用を想定
+      'https://www.googleapis.com/auth/tasks.readonly', // Tasks API利用を想定
     ].join(' '),
-    state: state, // 本来は動的に生成しCookie等で検証すべき
+    state: state,
   };
 
   // const qs = new URLSearchParams(options).toString();
@@ -141,7 +145,7 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
 
   // Cookieから保存されたstateを取得
   const cookie = request.headers.get('Cookie') || '';
-  const stateMatch = cookie.match(/auth_state=([^;]+)/);
+  const stateMatch = cookie.match(/(?:^|; )auth_state=([^;]+)/);
   console.log(`State in Cookie: ${stateMatch}`);
   const storedState = stateMatch ? stateMatch[1] : null;
 
@@ -171,7 +175,9 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   const tokens = await response.json() as GoogleTokens;
 
   if (tokens.error) {
-    return new Response(`Token exchange failed: ${tokens.error_description}`, { status: 500 });
+    // return new Response(`Token exchange failed: ${tokens.error_description}`, { status: 500 });
+    console.error(`Token exchange failed: ${tokens.error_description}`);
+    return new Response('認証トークンの取得に失敗しました。', { status: 500 });
   }
 
   // ユーザー情報取得
@@ -242,7 +248,7 @@ async function handleMe(request: Request, env: Env): Promise<Response> {
   const cookie = request.headers.get('Cookie');
   if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
-  const sessionMatch = cookie.match(/session=([^;]+)/);
+  const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
   if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
   try {
@@ -254,4 +260,93 @@ async function handleMe(request: Request, env: Env): Promise<Response> {
   } catch (_e) {
     return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
   }
+}
+
+/**
+ * refresh_token を使って access_token を更新します。
+ */
+async function refreshAccessToken(refreshToken: string, env: Env): Promise<string | null> {
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      refresh_token: refreshToken,
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  const tokens = await response.json() as GoogleTokens;
+  return tokens.access_token || null;
+}
+
+/**
+ * Google Tasks を取得して返します。
+ */
+async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
+  const cookie = request.headers.get('Cookie') || '';
+  // const refreshMatch = cookie.match(/refresh_token=([^;]+)/);
+  // const sessionMatch = cookie.match(/session=([^;]+)/);
+  // refresh_token= という文字列が他のクッキー名の一部（例: other_refresh_token）に含まれている場合
+  const refreshMatch = cookie.match(/(?:^|; )refresh_token=([^;]+)/);
+  const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
+
+  if (!refreshMatch || !sessionMatch) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    });
+  }
+
+  // セッション有効チェック
+  try {
+    jwt.verify(sessionMatch[1], env.JWT_SECRET);
+  } catch (_e) {
+    return new Response(JSON.stringify({ error: 'Invalid session' }), {
+      status: 401,
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    });
+  }
+
+  const accessToken = await refreshAccessToken(refreshMatch[1], env);
+  if (!accessToken) {
+    return new Response(JSON.stringify({ error: 'Failed to refresh token' }), {
+      status: 500,
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    });
+  }
+
+  // Tasks API から取得
+  const tasksUrl = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false';
+  const tasksRes = await fetch(tasksUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!tasksRes.ok) {
+    const errorBody = await tasksRes.text();
+    console.error(`[Worker] Google Tasks API error (${tasksRes.status}):`, errorBody);
+    return new Response(JSON.stringify({
+      error: 'Failed to fetch tasks from Google',
+      // details: errorBody,
+      // status: tasksRes.status
+    }), {
+      status: tasksRes.status,
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    });
+  }
+
+  const tasksData = await tasksRes.json() as { items?: any[] };
+  const tasks = (tasksData.items || []).map((item: any) => ({
+    googleTaskId: item.id,
+    title: item.title,
+    notes: item.notes || '',
+    updated: item.updated,
+  }));
+
+  return new Response(JSON.stringify({ tasks }), {
+    status: 200,
+    headers: createCorsHeaders(env.ALLOW_ORIGIN),
+  });
 }
