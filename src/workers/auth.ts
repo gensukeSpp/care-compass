@@ -145,7 +145,7 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
 
   // Cookieから保存されたstateを取得
   const cookie = request.headers.get('Cookie') || '';
-  const stateMatch = cookie.match(/auth_state=([^;]+)/);
+  const stateMatch = cookie.match(/(?:^|; )auth_state=([^;]+)/);
   console.log(`State in Cookie: ${stateMatch}`);
   const storedState = stateMatch ? stateMatch[1] : null;
 
@@ -175,7 +175,9 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   const tokens = await response.json() as GoogleTokens;
 
   if (tokens.error) {
-    return new Response(`Token exchange failed: ${tokens.error_description}`, { status: 500 });
+    // return new Response(`Token exchange failed: ${tokens.error_description}`, { status: 500 });
+    console.error(`Token exchange failed: ${tokens.error_description}`);
+    return new Response('認証トークンの取得に失敗しました。', { status: 500 });
   }
 
   // ユーザー情報取得
@@ -246,7 +248,7 @@ async function handleMe(request: Request, env: Env): Promise<Response> {
   const cookie = request.headers.get('Cookie');
   if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
-  const sessionMatch = cookie.match(/session=([^;]+)/);
+  const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
   if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
 
   try {
@@ -285,8 +287,11 @@ async function refreshAccessToken(refreshToken: string, env: Env): Promise<strin
  */
 async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
   const cookie = request.headers.get('Cookie') || '';
-  const refreshMatch = cookie.match(/refresh_token=([^;]+)/);
-  const sessionMatch = cookie.match(/session=([^;]+)/);
+  // const refreshMatch = cookie.match(/refresh_token=([^;]+)/);
+  // const sessionMatch = cookie.match(/session=([^;]+)/);
+  // refresh_token= という文字列が他のクッキー名の一部（例: other_refresh_token）に含まれている場合
+  const refreshMatch = cookie.match(/(?:^|; )refresh_token=([^;]+)/);
+  const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
 
   if (!refreshMatch || !sessionMatch) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -322,10 +327,10 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
   if (!tasksRes.ok) {
     const errorBody = await tasksRes.text();
     console.error(`[Worker] Google Tasks API error (${tasksRes.status}):`, errorBody);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'Failed to fetch tasks from Google',
-      details: errorBody,
-      status: tasksRes.status 
+      // details: errorBody,
+      // status: tasksRes.status
     }), {
       status: tasksRes.status,
       headers: createCorsHeaders(env.ALLOW_ORIGIN),

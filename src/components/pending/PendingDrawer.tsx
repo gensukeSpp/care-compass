@@ -15,8 +15,8 @@ export const PendingDrawer = () => {
     try {
       await syncTasks();
     } catch (error) {
-      console.error('Sync failed:', error);
-      // alert('Google Tasksの同期に失敗しました。');
+      // console.error('Sync failed:', error);
+      alert('Google Tasksの同期に失敗しました。');
     } finally {
       setIsSyncing(false);
     }
@@ -27,9 +27,15 @@ export const PendingDrawer = () => {
     if (text) {
       const { addPendingNote } = useStore.getState();
       // 1行目をタイトル、残りを内容にする
-      const lines = text.split('\n');
-      const title = lines[0].substring(0, 50) || 'Pasted Note';
-      const content = lines.length > 1 ? lines.slice(1).join('\n') : text;
+      // const lines = text.split('\n');
+      // const title = lines[0].substring(0, 50) || 'Pasted Note';
+      // const content = lines.length > 1 ? lines.slice(1).join('\n') : text;
+      // 1行のみのテキストを貼り付けた場合、タイトルと内容に同じ文字列が設定されるので、
+      // 1行の場合は内容を空にするか、適切に分割するようにロジックを改善する
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) return;
+      const title = lines[0].substring(0, 50);
+      const content = lines.length > 1 ? lines.slice(1).join('\n') : '';
       addPendingNote(title, content, 'house');
     }
   };
@@ -39,9 +45,8 @@ export const PendingDrawer = () => {
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
       onPaste={handlePaste}
-      className={`fixed top-0 right-0 h-full bg-gray-50 border-l shadow-2xl transition-transform duration-300 ease-in-out z-40 flex ${
-        isOpen ? 'translate-x-0' : 'translate-x-[calc(100%-40px)]'
-      }`}
+      className={`fixed top-0 right-0 h-full bg-gray-50 border-l shadow-2xl transition-transform duration-300 ease-in-out z-40 flex ${isOpen ? 'translate-x-0' : 'translate-x-[calc(100%-40px)]'
+        }`}
       style={{ width: '320px' }}
     >
       {/* 持ち手 (Handle) */}
@@ -79,7 +84,7 @@ export const PendingDrawer = () => {
           {pendingNotes.length === 0 ? (
             <div className="text-center text-gray-400 mt-10">
               <p className="text-sm">保留中の付箋はありません</p>
-              <p className="text-xs mt-2">Google KeepやMarkdownから<br/>追加したメモがここに表示されます</p>
+              <p className="text-xs mt-2">Google KeepやMarkdownから<br />追加したメモがここに表示されます</p>
             </div>
           ) : (
             pendingNotes.map((note) => (
@@ -87,7 +92,7 @@ export const PendingDrawer = () => {
             ))
           )}
         </div>
-        
+
         {/* 下部アクション (任意) */}
         <div className="mt-4 pt-4 border-t text-xs text-gray-400 italic">
           ボードにドラッグして配置できます
