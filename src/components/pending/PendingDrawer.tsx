@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { ListChecks } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { PendingNoteItem } from './PendingNoteItem';
 import { useFileImport } from '../../hooks/useDropMdFile';
-import { ListChecks } from 'lucide-react';
-import { TasksModal } from './TasksModal';
+import { TasksModal } from '../pending/TasksModal';
 
 export const PendingDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,7 +83,7 @@ export const PendingDrawer = () => {
           </div>
         </div>
       </div>
-      
+
       {isTasksModalOpen && (
         <TasksModal onClose={() => setIsTasksModalOpen(false)} />
       )}
