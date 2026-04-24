@@ -3,7 +3,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomBytes } from 'crypto';
 
 console.log('Worker script loaded');
 
@@ -60,7 +60,11 @@ export default {
       console.log(`[Worker] Fetching current user`);
       return handleMe(request, env);
     }
-    if (path === '/api/tasks/sync') {
+    if (path === '/api/tasks/lists') {
+      console.log(`[Worker] Listing Google Task Lists`);
+      return handleListTaskLists(request, env);
+    }
+    if (path === '/api/tasks/sync' || path === '/api/tasks/list-tasks') {
       console.log(`[Worker] Syncing Google Tasks`);
       return handleSyncTasks(request, env);
     }
@@ -257,7 +261,7 @@ async function handleMe(request: Request, env: Env): Promise<Response> {
       status: 200,
       headers: createCorsHeaders(env.ALLOW_ORIGIN),
     });
-  } catch (_e) {
+  } catch {
     return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
   }
 }
@@ -283,13 +287,10 @@ async function refreshAccessToken(refreshToken: string, env: Env): Promise<strin
 }
 
 /**
- * Google Tasks を取得して返します。
+ * 有効なアクセストークンを取得します。認証エラーの場合は Response を返します。
  */
-async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
+async function getAccessToken(request: Request, env: Env): Promise<string | Response> {
   const cookie = request.headers.get('Cookie') || '';
-  // const refreshMatch = cookie.match(/refresh_token=([^;]+)/);
-  // const sessionMatch = cookie.match(/session=([^;]+)/);
-  // refresh_token= という文字列が他のクッキー名の一部（例: other_refresh_token）に含まれている場合
   const refreshMatch = cookie.match(/(?:^|; )refresh_token=([^;]+)/);
   const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
 
@@ -303,7 +304,7 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
   // セッション有効チェック
   try {
     jwt.verify(sessionMatch[1], env.JWT_SECRET);
-  } catch (_e) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Invalid session' }), {
       status: 401,
       headers: createCorsHeaders(env.ALLOW_ORIGIN),
@@ -317,9 +318,57 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
       headers: createCorsHeaders(env.ALLOW_ORIGIN),
     });
   }
+  return accessToken;
+}
+
+/**
+ * Google Task Lists を取得して返します。
+ */
+async function handleListTaskLists(request: Request, env: Env): Promise<Response> {
+  const authResult = await getAccessToken(request, env);
+  if (authResult instanceof Response) return authResult;
+  const accessToken = authResult;
+
+  const listsUrl = 'https://tasks.googleapis.com/tasks/v1/users/@me/lists';
+  const listsRes = await fetch(listsUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!listsRes.ok) {
+    const errorBody = await listsRes.text();
+    console.error(`[Worker] Google Task Lists API error (${listsRes.status}):`, errorBody);
+    return new Response(JSON.stringify({ error: 'Failed to fetch task lists from Google' }), {
+      status: listsRes.status,
+      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    });
+  }
+
+  const listsData = await listsRes.json() as { items?: Array<Record<string, unknown>> };
+  const taskLists = (listsData.items || []).map((item) => ({
+    id: item.id as string,
+    title: item.title as string,
+    updated: item.updated as string,
+  }));
+
+  return new Response(JSON.stringify({ taskLists }), {
+    status: 200,
+    headers: createCorsHeaders(env.ALLOW_ORIGIN),
+  });
+}
+
+/**
+ * Google Tasks を取得して返します。
+ */
+async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
+  const authResult = await getAccessToken(request, env);
+  if (authResult instanceof Response) return authResult;
+  const accessToken = authResult;
+
+  const url = new URL(request.url);
+  const listId = url.searchParams.get('listId') || '@default';
 
   // Tasks API から取得
-  const tasksUrl = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false';
+  const tasksUrl = `https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`;
   const tasksRes = await fetch(tasksUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -329,20 +378,18 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
     console.error(`[Worker] Google Tasks API error (${tasksRes.status}):`, errorBody);
     return new Response(JSON.stringify({
       error: 'Failed to fetch tasks from Google',
-      // details: errorBody,
-      // status: tasksRes.status
     }), {
       status: tasksRes.status,
       headers: createCorsHeaders(env.ALLOW_ORIGIN),
     });
   }
 
-  const tasksData = await tasksRes.json() as { items?: any[] };
-  const tasks = (tasksData.items || []).map((item: any) => ({
-    googleTaskId: item.id,
-    title: item.title,
-    notes: item.notes || '',
-    updated: item.updated,
+  const tasksData = await tasksRes.json() as { items?: Array<Record<string, unknown>> };
+  const tasks = (tasksData.items || []).map((item) => ({
+    googleTaskId: item.id as string,
+    title: item.title as string,
+    notes: (item.notes as string) || '',
+    updated: item.updated as string,
   }));
 
   return new Response(JSON.stringify({ tasks }), {

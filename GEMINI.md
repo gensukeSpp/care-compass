@@ -50,6 +50,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] **Markdown Batch Import (1):** Structural split by headers & Multi-file drop support.
 - [ ] **Markdown Batch Import (2):** Keyword-based automatic classification (Category/Status).
 - [ ] **Markdown Batch Import (3):** AI-enhanced context analysis & summarization.
+- [x] **Google Tasks to Pending Box (Issue #29):** Support for selecting task lists and tasks to import into Pending Box.
 - [x] **Google Keep Integration (Auth):** Implementation of OAuth 2.0 and session management (Zustand + Cloudflare Workers).
 - [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box.
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.

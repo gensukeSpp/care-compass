@@ -29,10 +29,11 @@ interface BoardState {
 	// Pending
 	pendingNotes: Note[]; // 追加
 	addPendingNote: (title: string, content: string, category: Category) => void; // 追加
-	addPendingNotes: (newNotes: { title: string; content: string; category: Category }[]) => void; // 追加
+	addPendingNotes: (newNotes: { title: string; content: string; category: Category; googleTaskId?: string }[]) => void; // 追加
 	moveToPending: (id: string) => void; // 追加
 	moveToBoard: (id: string, x: number, y: number) => void; // 追加
 	mergeNotes: (sourceId: string, targetId: string) => void; // 追加
+	// Tasks
 	syncTasks: () => Promise<void>; // 追加
 }
 
@@ -123,7 +124,7 @@ export const useStore = create<BoardState>()(
 					const authorName = useAuthStore.getState().currentUser?.name;
 					return {
 						pendingNotes: [
-							...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending', authorName)),
+							...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending', authorName, n.googleTaskId)),
 							...state.pendingNotes
 						],
 					};
@@ -291,7 +292,7 @@ export const useStore = create<BoardState>()(
 
 				try {
 					const tasks = await tasksSyncService.fetchTasks();
-					
+
 					// 重複排除: すでに notes または pendingNotes に存在する googleTaskId を除外
 					const existingGoogleTaskIds = new Set([
 						...notes.map(n => n.googleTaskId).filter(Boolean),
@@ -302,7 +303,7 @@ export const useStore = create<BoardState>()(
 
 					if (newTasks.length === 0) return;
 
-					const newNotes = newTasks.map(task => 
+					const newNotes = newTasks.map(task =>
 						createNote(task.title, task.notes, 'house', 'pending', authorName, task.googleTaskId)
 					);
 
@@ -323,14 +324,16 @@ export const useStore = create<BoardState>()(
 		{
 			name: 'care-board-storage',
 			version: 1, // バージョンを上げる
-			migrate: (persistedState: any, version: number) => {
+			migrate: (persistedState: unknown, version: number) => {
 				if (version === 0) {
+					const state = persistedState as BoardState | null;
+					if (!state) return persistedState as BoardState;
 					// バージョン0（以前の状態）から移行する場合、
 					// pendingNotes が空、または存在しないなら初期データを注入する
 					return {
-						...persistedState,
-						pendingNotes: (persistedState.pendingNotes && persistedState.pendingNotes.length > 0)
-							? persistedState.pendingNotes
+						...state,
+						pendingNotes: (state.pendingNotes && state.pendingNotes.length > 0)
+							? state.pendingNotes
 							: INITIAL_PENDING_NOTES
 					};
 				}

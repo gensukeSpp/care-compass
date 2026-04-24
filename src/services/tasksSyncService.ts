@@ -9,14 +9,27 @@ export interface GoogleTask {
   updated: string;
 }
 
+export interface GoogleTaskList {
+  id: string;
+  title: string;
+  updated: string;
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export const tasksSyncService = {
   /**
-   * Google Tasks を同期取得します。
+   * Google Tasks を同期取得します（デフォルトリスト）。
    */
   async fetchTasks(): Promise<GoogleTask[]> {
-    const response = await fetch(`${API_BASE}/api/tasks/sync`, {
+    return this.fetchTasksFromList('@default');
+  },
+
+  /**
+   * Google Task Lists を取得します。
+   */
+  async fetchTaskLists(): Promise<GoogleTaskList[]> {
+    const response = await fetch(`${API_BASE}/api/tasks/lists`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +38,28 @@ export const tasksSyncService = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const message = errorData.details || errorData.error || 'Failed to sync tasks';
+      const message = errorData.error || 'Failed to fetch task lists';
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    return data.taskLists || [];
+  },
+
+  /**
+   * 指定したリストから Google Tasks を取得します。
+   */
+  async fetchTasksFromList(listId: string): Promise<GoogleTask[]> {
+    const response = await fetch(`${API_BASE}/api/tasks/list-tasks?listId=${encodeURIComponent(listId)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.error || 'Failed to sync tasks';
       throw new Error(message);
     }
 
