@@ -12,6 +12,27 @@ export const AuthCallback: React.FC = () => {
   const setError = useAuthStore((state) => state.setError);
 
   useEffect(() => {
+    const resolveApiBaseUrl = () => {
+      const configuredUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+      if (!configuredUrl) return '';
+
+      try {
+        const parsed = new URL(configuredUrl);
+        const isConfiguredLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+        const isRuntimeLocalhost =
+          window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // 本番ホストで localhost が埋め込まれている場合は無視して同一オリジンにフォールバックする
+        if (isConfiguredLocalhost && !isRuntimeLocalhost) {
+          return '';
+        }
+
+        return configuredUrl.replace(/\/+$/, '');
+      } catch {
+        return '';
+      }
+    };
+
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -24,7 +45,7 @@ export const AuthCallback: React.FC = () => {
 
     const handleCallback = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+        const API_BASE_URL = resolveApiBaseUrl();
         // バックエンドのコールバックエンドポイントを呼び出す
         // バックエンドが 302 Redirect を返すと fetch は自動で追従するが、
         // Cookie はブラウザによって保存される。

@@ -1,4 +1,4 @@
-name = "care-compass-production"
+name = "care-compass"
 # Set this to today's date
 compatibility_date = "2026-03-31"
 compatibility_flags = ["nodejs_compat"] # nodejs_compat_v2として認識される
@@ -13,4 +13,5 @@ not_found_handling = "single-page-application"
 [env.development]
 vars = { GOOGLE_CLIENT_ID = "YOUR_DEV_CLIENT_ID", GOOGLE_REDIRECT_URI = "http://localhost:5173/auth/google/callback" }
 [env.production]
+name = "care-compass-production"
 vars = { GOOGLE_CLIENT_ID = "YOUR_PROD_CLIENT_ID", GOOGLE_REDIRECT_URI = "https://care-compass-production.ktde-z3837.workers.dev/auth/google/callback", ALLOW_ORIGIN = "https://care-compass-production.ktde-z3837.workers.dev" }
