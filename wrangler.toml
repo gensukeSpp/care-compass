@@ -13,4 +13,4 @@ not_found_handling = "single-page-application"
 [env.development]
 vars = { GOOGLE_CLIENT_ID = "YOUR_DEV_CLIENT_ID", GOOGLE_REDIRECT_URI = "http://localhost:5173/auth/google/callback" }
 [env.production]
-vars = { GOOGLE_CLIENT_ID = "YOUR_PROD_CLIENT_ID", GOOGLE_REDIRECT_URI = "https://care-compass.example.com/auth/google/callback" }
+vars = { GOOGLE_CLIENT_ID = "YOUR_PROD_CLIENT_ID", GOOGLE_REDIRECT_URI = "https://care-compass.ktde-z3837.com/auth/google/callback" }
