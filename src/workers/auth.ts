@@ -42,7 +42,7 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     const normalizedPath = pathname.replace(/\/+$/, '') || '/'; // 末尾のスラッシュを除去、ルートは'/'
-    
+
     console.log(`[Worker] Incoming request: ${request.method} ${pathname} (normalized: ${normalizedPath})`);
 
     // API ルーティング (前方一致で判定)
@@ -83,7 +83,7 @@ export default {
 
       // 定義されていない API パス
       console.warn(`[Worker] Unhandled API path: ${normalizedPath}`);
-      return new Response(JSON.stringify({ error: 'API route not found' }), { 
+      return new Response(JSON.stringify({ error: 'API route not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });

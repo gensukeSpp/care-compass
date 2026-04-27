@@ -1,4 +1,4 @@
-name = "care-compass"
+name = "care-compass-production"
 # Set this to today's date
 compatibility_date = "2026-03-31"
 compatibility_flags = ["nodejs_compat"] # nodejs_compat_v2として認識される
