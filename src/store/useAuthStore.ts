@@ -42,7 +42,13 @@ interface AuthState {
   setUser: (user: User | null) => void;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const getApiBaseUrl = () => {
+  const url = import.meta.env.VITE_API_BASE_URL;
+  if (!url || url.trim() === '') return '';
+  return url.trim();
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -53,8 +59,9 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       login: () => {
-        console.log(`API_BASE_URL: ${API_BASE_URL}`);
-        window.location.href = `${API_BASE_URL}/api/auth/google`;
+        const target = `${API_BASE_URL}/api/auth/google`;
+        console.log(`Redirecting to: ${target}`);
+        window.location.href = target;
       },
 
       logout: () => {
