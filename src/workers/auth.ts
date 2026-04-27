@@ -40,54 +40,62 @@ export default {
    */
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const path = url.pathname.replace(/\/$/, ''); // 末尾のスラッシュを削除して正規化
-    console.log(`[Worker] Incoming request: ${request.method} ${url.pathname} (normalized: ${path})`);
+    const pathname = url.pathname;
+    const normalizedPath = pathname.replace(/\/+$/, '') || '/'; // 末尾のスラッシュを除去、ルートは'/'
+    
+    console.log(`[Worker] Incoming request: ${request.method} ${pathname} (normalized: ${normalizedPath})`);
 
-    // API ルーティング
-    if (path === '/api/auth/google') {
-      console.log(`[Worker] Redirecting to Google Auth`);
-      return handleGoogleAuth(env);
-    }
-    if (path === '/api/auth/google/callback') {
-      console.log(`[Worker] Handling Google Callback`);
-      return handleGoogleCallback(request, env);
-    }
-    if (path === '/api/auth/logout') {
-      console.log(`[Worker] Logging out`);
-      return handleLogout();
-    }
-    if (path === '/api/auth/me') {
-      console.log(`[Worker] Fetching current user`);
-      return handleMe(request, env);
-    }
-    if (path === '/api/tasks/lists') {
-      console.log(`[Worker] Listing Google Task Lists`);
-      return handleListTaskLists(request, env);
-    }
-    if (path === '/api/tasks/sync' || path === '/api/tasks/list-tasks') {
-      console.log(`[Worker] Syncing Google Tasks`);
-      return handleSyncTasks(request, env);
-    }
+    // API ルーティング (前方一致で判定)
+    if (normalizedPath.startsWith('/api/') || normalizedPath === '/auth/google/callback') {
+      if (normalizedPath === '/api/auth/google') {
+        console.log(`[Worker] Handling Google Auth`);
+        return handleGoogleAuth(env);
+      }
+      if (normalizedPath === '/api/auth/google/callback' || normalizedPath === '/auth/google/callback') {
+        console.log(`[Worker] Handling Google Callback`);
+        return handleGoogleCallback(request, env);
+      }
+      if (normalizedPath === '/api/auth/logout') {
+        return handleLogout();
+      }
+      if (normalizedPath === '/api/auth/me') {
+        return handleMe(request, env);
+      }
+      if (normalizedPath === '/api/tasks/lists') {
+        return handleListTaskLists(request, env);
+      }
+      if (normalizedPath === '/api/tasks/sync' || normalizedPath === '/api/tasks/list-tasks') {
+        return handleSyncTasks(request, env);
+      }
 
-    if (request.method === 'OPTIONS' && path.startsWith('/api/')) {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': env.ALLOW_ORIGIN,
-          'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
+      // プリフライトリクエスト
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': env.ALLOW_ORIGIN || '*',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        });
+      }
+
+      // 定義されていない API パス
+      console.warn(`[Worker] Unhandled API path: ${normalizedPath}`);
+      return new Response(JSON.stringify({ error: 'API route not found' }), { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
       });
     }
 
     // API以外はアセットを返す（フロントエンド）
     if (env.ASSETS) {
-      console.log(`[Worker] Serving assets for: ${url.pathname}`);
+      console.log(`[Worker] Serving assets for: ${pathname}`);
       return env.ASSETS.fetch(request);
     }
 
-    console.log(`[Worker] Path not found: ${url.pathname}`);
+    console.error(`[Worker] Path not handled and ASSETS not available: ${pathname}`);
     return new Response('Not Found', { status: 404 });
   }
 };
