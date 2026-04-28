@@ -49,7 +49,7 @@ export const AuthCallback: React.FC = () => {
         // バックエンドのコールバックエンドポイントを呼び出す
         // バックエンドが 302 Redirect を返すと fetch は自動で追従するが、
         // Cookie はブラウザによって保存される。
-        const response = await fetch(`${API_BASE_URL}/api/auth/google/callback?code=${code}&state=${state}`, {
+        const response = await fetch(`${API_BASE_URL}/auth/google/callback?code=${code}&state=${state}`, {
           // Cookie（session等）を確実に受け取るため
           credentials: 'include',
         });
