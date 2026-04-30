@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { getApiBaseUrl } from '../utils/api';
+import { get } from 'http';
 
 /**
  * Google OAuth 2.0 のコールバックを処理するページコンポーネント
@@ -24,7 +26,7 @@ export const AuthCallback: React.FC = () => {
 
     const handleCallback = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+        const API_BASE_URL = getApiBaseUrl();
         // バックエンドのコールバックエンドポイントを呼び出す
         // バックエンドが 302 Redirect を返すと fetch は自動で追従するが、
         // Cookie はブラウザによって保存される。

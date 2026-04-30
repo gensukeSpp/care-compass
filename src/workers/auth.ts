@@ -40,55 +40,67 @@ export default {
    */
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const path = url.pathname.replace(/\/$/, ''); // 末尾のスラッシュを削除して正規化
-    console.log(`[Worker] Incoming request: ${request.method} ${url.pathname} (normalized: ${path})`);
+    const pathname = url.pathname;
+    const normalizedPath = pathname.replace(/\/+$/, '') || '/'; // 末尾のスラッシュを除去、ルートは'/'
 
-    // API ルーティング
-    if (path === '/api/auth/google') {
-      console.log(`[Worker] Redirecting to Google Auth`);
-      return handleGoogleAuth(env);
-    }
-    if (path === '/api/auth/google/callback') {
-      console.log(`[Worker] Handling Google Callback`);
-      return handleGoogleCallback(request, env);
-    }
-    if (path === '/api/auth/logout') {
-      console.log(`[Worker] Logging out`);
-      return handleLogout();
-    }
-    if (path === '/api/auth/me') {
-      console.log(`[Worker] Fetching current user`);
-      return handleMe(request, env);
-    }
-    if (path === '/api/tasks/lists') {
-      console.log(`[Worker] Listing Google Task Lists`);
-      return handleListTaskLists(request, env);
-    }
-    if (path === '/api/tasks/sync' || path === '/api/tasks/list-tasks') {
-      console.log(`[Worker] Syncing Google Tasks`);
-      return handleSyncTasks(request, env);
+    console.log(`[Worker] Incoming request: ${request.method} ${pathname} (normalized: ${normalizedPath})`);
+
+    // API ルーティング (前方一致で判定)
+    let response: Response;
+
+    if (normalizedPath.startsWith('/api/') || normalizedPath === '/auth/google/callback') {
+      if (normalizedPath === '/api/auth/google') {
+        console.log(`[Worker] Handling Google Auth`);
+        response = await handleGoogleAuth(env);
+      } else if (normalizedPath === '/api/auth/google/callback' || normalizedPath === '/auth/google/callback') {
+        console.log(`[Worker] Handling Google Callback`);
+        response = await handleGoogleCallback(request, env);
+      } else if (normalizedPath === '/api/auth/logout') {
+        response = await handleLogout(env);
+      } else if (normalizedPath === '/api/auth/me') {
+        response = await handleMe(request, env);
+      } else if (normalizedPath === '/api/tasks/lists') {
+        response = await handleListTaskLists(request, env);
+      } else if (normalizedPath === '/api/tasks/sync' || normalizedPath === '/api/tasks/list-tasks') {
+        response = await handleSyncTasks(request, env);
+      } else if (request.method === 'OPTIONS') {
+        // プリフライトリクエスト
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': env.ALLOW_ORIGIN || '',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        });
+      } else {
+        // 定義されていない API パス
+        console.warn(`[Worker] Unhandled API path: ${normalizedPath}`);
+        response = new Response(JSON.stringify({ error: 'API route not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } else if (env.ASSETS) {
+      // API以外はアセットを返す（フロントエンド）
+      console.log(`[Worker] Serving assets for: ${pathname}`);
+      response = await env.ASSETS.fetch(request);
+    } else {
+      console.error(`[Worker] Path not handled and ASSETS not available: ${pathname}`);
+      response = new Response('Not Found', { status: 404 });
     }
 
-    if (request.method === 'OPTIONS' && path.startsWith('/api/')) {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          'Access-Control-Allow-Origin': env.ALLOW_ORIGIN,
-          'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      });
-    }
+    // すべてのレスポンスに共通の CORS ヘッダーを付与
+    const newHeaders = new Headers(response.headers);
+    newHeaders.set('Access-Control-Allow-Origin', env.ALLOW_ORIGIN || '');
+    newHeaders.set('Access-Control-Allow-Credentials', 'true');
 
-    // API以外はアセットを返す（フロントエンド）
-    if (env.ASSETS) {
-      console.log(`[Worker] Serving assets for: ${url.pathname}`);
-      return env.ASSETS.fetch(request);
-    }
-
-    console.log(`[Worker] Path not found: ${url.pathname}`);
-    return new Response('Not Found', { status: 404 });
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders,
+    });
   }
 };
 
@@ -97,10 +109,15 @@ export default {
  * URLセーフなBase64形式で出力
  */
 export const generateStateToken = (): string => {
-  // return randomBytes(32).toString('urlsafe').replace(/[=]/g, ''); 
-  // ※Node.js 14.18+ / 16.0+ なら 'base64url' が直接使えます
   return randomBytes(32).toString('base64url');
 };
+
+
+function getCookieOptions(env: Env, maxAge: number): string {
+  const isLocal = env.GOOGLE_REDIRECT_URI?.includes('localhost');
+  const base = `HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+  return isLocal ? base : `${base}; Secure`;
+}
 
 /**
  * Google OAuth 認可 URL へリダイレクトします。
@@ -125,13 +142,16 @@ function handleGoogleAuth(env: Env): Response {
     state: state,
   };
 
-  // const qs = new URLSearchParams(options).toString();
   const qs = new URLSearchParams({ ...options, state }).toString();
   const headers = new Headers();
   headers.append('Location', `${rootUrl}?${qs}`);
-  // 一時的なCookieにstateを保存 (有効期限は短くて良い。ここでは10分)
-  headers.append('Set-Cookie', `auth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`);
-  // return Response.redirect(`${rootUrl}?${qs}`, 302);
+
+  // 開発環境（localhost）では Secure 属性を外さないと、HTTP 環境で Cookie が保存されない場合がある
+  const cookieAttrs = getCookieOptions(env, 600);
+
+  headers.append('Set-Cookie', `auth_state=${state}; ${cookieAttrs}`);
+  // console.log(`[Worker] Setting auth_state cookie. isLocal: ${isLocal}`);
+
   return new Response(null, { status: 302, headers });
 }
 
@@ -147,22 +167,32 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   const code = url.searchParams.get('code');
   const stateInUrl = url.searchParams.get('state');
 
-  // Cookieから保存されたstateを取得
   const cookie = request.headers.get('Cookie') || '';
+  console.log(`[Worker] Received Cookies: ${cookie}`);
+
   const stateMatch = cookie.match(/(?:^|; )auth_state=([^;]+)/);
-  console.log(`State in Cookie: ${stateMatch}`);
   const storedState = stateMatch ? stateMatch[1] : null;
 
-  // 保存しておいたstateと一致するか厳密にチェック
+  console.log(`[Worker] stateInUrl: ${stateInUrl}, storedState: ${storedState}`);
+
   if (!stateInUrl || !storedState || stateInUrl !== storedState) {
-    return new Response('CSRF攻撃の可能性があります。', { status: 403 });
+    console.error(`[Worker] CSRF check failed. stateInUrl: ${stateInUrl}, storedState: ${storedState}`);
+    return new Response(JSON.stringify({
+      error: 'CSRF攻撃の可能性があります。',
+      details: { stateInUrl: !!stateInUrl, storedState: !!storedState, match: stateInUrl === storedState }
+    }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   if (!code) {
-    return new Response('Code not found', { status: 400 });
+    return new Response(JSON.stringify({ error: 'Code not found' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  // トークン交換
   const tokenUrl = 'https://oauth2.googleapis.com/token';
   const response = await fetch(tokenUrl, {
     method: 'POST',
@@ -179,20 +209,23 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   const tokens = await response.json() as GoogleTokens;
 
   if (tokens.error) {
-    // return new Response(`Token exchange failed: ${tokens.error_description}`, { status: 500 });
     console.error(`Token exchange failed: ${tokens.error_description}`);
-    return new Response('認証トークンの取得に失敗しました。', { status: 500 });
+    return new Response(JSON.stringify({ error: '認証トークンの取得に失敗しました。' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  // ユーザー情報取得
   const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
   const user = await userRes.json() as GoogleUser;
 
-  // セッション JWT 作成
   if (!env.JWT_SECRET) {
-    return new Response('⚠️ JWT_SECRET is not set in environment variables.', { status: 500 });
+    return new Response(JSON.stringify({ error: '⚠️ JWT_SECRET is not set in environment variables.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const sessionToken = jwt.sign(
@@ -206,17 +239,18 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
     { expiresIn: '7d' }
   );
 
-  // Cookie の設定 (refresh_token と sessionToken)
   const headers = new Headers();
-  headers.append('Set-Cookie', `session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`);
+  const cookieAttrs = getCookieOptions(env, 60 * 60 * 24 * 7);
+  headers.append('Set-Cookie', `session=${sessionToken}; ${cookieAttrs}`);
 
   if (tokens.refresh_token) {
-    headers.append('Set-Cookie', `refresh_token=${tokens.refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 24 * 60 * 60}`);
+    headers.append('Set-Cookie', `refresh_token=${tokens.refresh_token}; ${cookieAttrs}`);
   }
 
   headers.append('Location', '/');
-  // 成功時のレスポンスヘッダーに、auth_state Cookieの削除を追加
-  headers.append('Set-Cookie', 'auth_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
+  // auth_state のクリア
+  headers.append('Set-Cookie', `auth_state=; ${getCookieOptions(env, 0)}`);
+
   return new Response(null, { status: 302, headers });
 }
 
@@ -224,21 +258,14 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
  * ログアウト処理（Cookieをクリア）を行います。
  * @return :Response ログアウトレスポンス
  */
-function handleLogout(): Response {
+function handleLogout(env: Env): Response {
   const headers = new Headers();
-  headers.append('Set-Cookie', 'session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
-  headers.append('Set-Cookie', 'refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
+  const cookieAttrs = getCookieOptions(env, 0);
+  headers.append('Set-Cookie', `session=; ${cookieAttrs}`);
+  headers.append('Set-Cookie', `refresh_token=; ${cookieAttrs}`);
+
   headers.append('Location', '/');
   return new Response(null, { status: 302, headers });
-}
-
-function createCorsHeaders(allow_url: string) {
-  return {
-    'Access-Control-Allow-Origin': allow_url,
-    'Access-Control-Allow-Credentials': 'true',
-    'Content-Type': 'application/json',
-    // 'credentials': 'include'
-  };
 }
 
 /**
@@ -246,23 +273,23 @@ function createCorsHeaders(allow_url: string) {
  * @params
  *  request :Request - 認証情報を含むリクエスト
  *  env :Env - 環境変数
- * @return :Promise<Response> ユーザー情報を含むJSONレスポンス
+ * @return :Response ユーザー情報を含むJSONレスポンス
  */
-async function handleMe(request: Request, env: Env): Promise<Response> {
+function handleMe(request: Request, env: Env): Response {
   const cookie = request.headers.get('Cookie');
-  if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
+  if (!cookie) return new Response(JSON.stringify({ user: null }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   const sessionMatch = cookie.match(/(?:^|; )session=([^;]+)/);
-  if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
+  if (!sessionMatch) return new Response(JSON.stringify({ user: null }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   try {
-    const decoded = jwt.verify(sessionMatch[1], env.JWT_SECRET) as GoogleUser;
+    const decoded = jwt.verify(sessionMatch[1], env.JWT_SECRET, { algorithms: ['HS256'] }) as GoogleUser;
     return new Response(JSON.stringify({ user: decoded }), {
       status: 200,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch {
-    return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: createCorsHeaders(env.ALLOW_ORIGIN), });
+    return new Response(JSON.stringify({ user: null, error: 'Invalid session' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 }
 
@@ -297,17 +324,16 @@ async function getAccessToken(request: Request, env: Env): Promise<string | Resp
   if (!refreshMatch || !sessionMatch) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  // セッション有効チェック
   try {
-    jwt.verify(sessionMatch[1], env.JWT_SECRET);
+    jwt.verify(sessionMatch[1], env.JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid session' }), {
       status: 401,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -315,7 +341,7 @@ async function getAccessToken(request: Request, env: Env): Promise<string | Resp
   if (!accessToken) {
     return new Response(JSON.stringify({ error: 'Failed to refresh token' }), {
       status: 500,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   }
   return accessToken;
@@ -339,7 +365,7 @@ async function handleListTaskLists(request: Request, env: Env): Promise<Response
     console.error(`[Worker] Google Task Lists API error (${listsRes.status}):`, errorBody);
     return new Response(JSON.stringify({ error: 'Failed to fetch task lists from Google' }), {
       status: listsRes.status,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -352,7 +378,7 @@ async function handleListTaskLists(request: Request, env: Env): Promise<Response
 
   return new Response(JSON.stringify({ taskLists }), {
     status: 200,
-    headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -367,7 +393,6 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const listId = url.searchParams.get('listId') || '@default';
 
-  // Tasks API から取得
   const tasksUrl = `https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`;
   const tasksRes = await fetch(tasksUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -380,7 +405,7 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
       error: 'Failed to fetch tasks from Google',
     }), {
       status: tasksRes.status,
-      headers: createCorsHeaders(env.ALLOW_ORIGIN),
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -394,6 +419,6 @@ async function handleSyncTasks(request: Request, env: Env): Promise<Response> {
 
   return new Response(JSON.stringify({ tasks }), {
     status: 200,
-    headers: createCorsHeaders(env.ALLOW_ORIGIN),
+    headers: { 'Content-Type': 'application/json' },
   });
 }
