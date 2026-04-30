@@ -17,4 +17,4 @@ vars = { GOOGLE_CLIENT_ID = "YOUR_DEV_CLIENT_ID", GOOGLE_REDIRECT_URI = "http://
 [env.production]
 name = "care-compass-production"
 workers_dev = true
-vars = { GOOGLE_CLIENT_ID = "804738774631-7v8sb3ctepoua8rr0es2ud5ah7q14jcr.apps.googleusercontent.com", GOOGLE_REDIRECT_URI = "https://care-compass-production.ktde-z3837.workers.dev/auth/google/callback", ALLOW_ORIGIN = "https://care-compass-production.ktde-z3837.workers.dev" }
+vars = { GOOGLE_REDIRECT_URI = "https://care-compass-production.ktde-z3837.workers.dev/auth/google/callback", ALLOW_ORIGIN = "https://care-compass-production.ktde-z3837.workers.dev" }
