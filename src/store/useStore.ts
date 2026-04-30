@@ -58,6 +58,7 @@ function createNote(title: string, content: string, category: Category, status: 
 
 	return {
 		id: uuidv4(),
+		profile_id: '', // ← ADD THIS #31
 		title,
 		content,
 		category,

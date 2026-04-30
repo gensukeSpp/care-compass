@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
+    "@supabase/supabase-js": "^2.105.1",
     "@tailwindcss/vite": "^4.2.2",
     "dnd-kit": "^0.0.2",
     "dotenv": "^17.4.2",

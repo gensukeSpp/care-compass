@@ -13,6 +13,7 @@ export interface History {
 
 export interface Note {
   id: string;
+  profile_id: string; // ← ADD THIS #31
   title: string;
   category: Category;
   status: QuadrantId;
@@ -24,4 +25,12 @@ export interface Note {
   y: number;
   history?: History[];
   googleTaskId?: string;
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  created_by: string; // user_id
+  created_at?: string;
+  updated_at?: string;
 }
