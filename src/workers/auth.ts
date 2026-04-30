@@ -244,7 +244,7 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
   headers.append('Set-Cookie', `session=${sessionToken}; ${cookieAttrs}`);
 
   if (tokens.refresh_token) {
-    headers.append('Set-Cookie', `refresh_token=${tokens.refresh_token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 24 * 60 * 60}`);
+    headers.append('Set-Cookie', `refresh_token=${tokens.refresh_token}; ${cookieAttrs}`);
   }
 
   headers.append('Location', '/');
@@ -256,7 +256,7 @@ async function handleGoogleCallback(request: Request, env: Env): Promise<Respons
 
 /**
  * ログアウト処理（Cookieをクリア）を行います。
- * @return :Promise<Response> ログアウトレスポンス
+ * @return :Response ログアウトレスポンス
  */
 function handleLogout(env: Env): Response {
   const headers = new Headers();
@@ -273,7 +273,7 @@ function handleLogout(env: Env): Response {
  * @params
  *  request :Request - 認証情報を含むリクエスト
  *  env :Env - 環境変数
- * @return :Promise<Response> ユーザー情報を含むJSONレスポンス
+ * @return :Response ユーザー情報を含むJSONレスポンス
  */
 function handleMe(request: Request, env: Env): Response {
   const cookie = request.headers.get('Cookie');

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiBaseUrl } from '../utils/api';
+import { get } from 'http';
 
 /**
  * Google OAuth 2.0 のコールバックを処理するページコンポーネント
@@ -13,10 +14,6 @@ export const AuthCallback: React.FC = () => {
   const setError = useAuthStore((state) => state.setError);
 
   useEffect(() => {
-    const resolveApiBaseUrl = () => {
-      return getApiBaseUrl();
-    };
-
     const searchParams = new URLSearchParams(location.search);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -29,7 +26,7 @@ export const AuthCallback: React.FC = () => {
 
     const handleCallback = async () => {
       try {
-        const API_BASE_URL = resolveApiBaseUrl();
+        const API_BASE_URL = getApiBaseUrl();
         // バックエンドのコールバックエンドポイントを呼び出す
         // バックエンドが 302 Redirect を返すと fetch は自動で追従するが、
         // Cookie はブラウザによって保存される。
