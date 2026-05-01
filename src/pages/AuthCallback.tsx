@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiBaseUrl } from '../utils/api';
-import { get } from 'http';
 
 /**
  * Google OAuth 2.0 のコールバックを処理するページコンポーネント
