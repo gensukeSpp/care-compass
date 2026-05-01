@@ -38,39 +38,41 @@ interface BoardState {
 }
 
 function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string, googleTaskId?: string): Note {
-	let x = 5;
-	let y = 5;
+        let x = 5;
+        let y = 5;
+        const profile_id = useAuthStore.getState().currentProfileId || '';
 
-	switch (status) {
-		case 'can':
-			x = 5; y = 5; break;
-		case 'cannot':
-			x = 55; y = 5; break;
-		case 'risk':
-			x = 5; y = 55; break;
-		case 'request':
-			x = 55; y = 55; break;
-		case 'pending':
-			x = 0; y = 0; break; // drawer内では座標は不要
-		default:
-			x = 40; y = 40; // central area for neutral
-	}
+        switch (status) {
+                case 'can':
+                        x = 5; y = 5; break;
+                case 'cannot':
+                        x = 55; y = 5; break;
+                case 'risk':
+                        x = 5; y = 55; break;
+                case 'request':
+                        x = 55; y = 55; break;
+                case 'pending':
+                        x = 0; y = 0; break; // drawer内では座標は不要
+                default:
+                        x = 40; y = 40; // central area for neutral
+        }
 
-	return {
-		id: uuidv4(),
-		profile_id: '', // ← ADD THIS #31
-		title,
-		content,
-		category,
-		status,
-		authorName,
-		googleTaskId,
-		x,
-		y,
-		updatedAt: new Date().toISOString(),
-		history: [],
-	};
+        return {
+                id: uuidv4(),
+                profile_id,
+                title,
+                content,
+                category,
+                status,
+                authorName,
+                googleTaskId,
+                x,
+                y,
+                updatedAt: new Date().toISOString(),
+                history: [],
+        };
 }
+
 export const useStore = create<BoardState>()(
 	persist(
 		(set) => ({

@@ -12,9 +12,9 @@ Step 1 では、ユーザーのプロファイル（対象者）作成時に Sup
 1. ✅ Google OAuth 認証: Cloudflare Workers を経由して実装済み
 2. ✅ 認証状態管理: `useAuthStore` で currentUser を保存
 3. ✅ ボード・ノーツ管理: `useStore` で Zustand + ローカルストレージ
-4. ❌ Supabase クライアント設定: 未実装（src/lib/supabase.ts がない）
-5. ❌ @supabase/supabase-js パッケージ: 未インストール
-6. ❌ Note 型に profile_id: 存在しない
+4. ✅ Supabase クライアント設定: 未実装（src/lib/supabase.ts がない）
+5. ✅ @supabase/supabase-js パッケージ: 未インストール
+6. ✅ Note 型に profile_id: 存在しない
 7. ❌ Profile 選択ロジック: ボード作成時に profile_id が割り当てられていない
 8. ❌ 複数ユーザー/複数ボード管理: useStore で profile_id ベースの分離がない
 

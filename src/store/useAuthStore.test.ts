@@ -1,19 +1,48 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from './useAuthStore';
-import { redirect } from 'react-router-dom';
 
 // Mock fetch
 global.fetch = vi.fn();
 
+// Mock supabase
+vi.mock('../lib/supabase', () => {
+  const mockAuth = {
+    signInWithOAuth: vi.fn(() => Promise.resolve({ error: null })),
+    signOut: vi.fn(() => Promise.resolve({ error: null })),
+    getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+  };
+  const mockFrom = vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { id: 'p1', name: 'Profile 1' }, error: null }),
+      }),
+    }),
+  });
+
+  return {
+    supabase: {
+      auth: mockAuth,
+      from: mockFrom,
+    },
+  };
+});
+
+import { supabase } from '../lib/supabase';
+
 describe('useAuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // ストアのリセット（永続化されているため、必要に応じて手動でリセット）
+    // ストアのリセット
     useAuthStore.setState({
       currentUser: null,
       isLoggedIn: false,
       isLoading: false,
       error: null,
+      currentProfileId: null,
+      currentProfiles: [],
     });
   });
 
@@ -23,56 +52,54 @@ describe('useAuthStore', () => {
     expect(state.isLoggedIn).toBe(false);
     expect(state.isLoading).toBe(false);
     expect(state.error).toBeNull();
+    expect(state.currentProfileId).toBeNull();
+    expect(state.currentProfiles).toEqual([]);
   });
 
-  it('login が適切な URL にリダイレクトすること', () => {
-    // window.location.href のモック化は少し工夫が必要だが、ここでは関数の存在を確認
-    const originalLocation = window.location;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).location;
-    // window.location = { ...originalLocation, href: '' } as string & Location;
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, href: '' } as Location,
-    });
-
+  it('login が supabase.auth.signInWithOAuth を呼び出すこと', async () => {
     const { login } = useAuthStore.getState();
-    login();
+    await login();
 
-    expect(window.location.href).toContain('/api/auth/google');
-
-    /**
-     * ローカル変数より Object.defineProperty が良い理由
-     * 「window.location.href の変更を観測すること」なので、
-     * 実際に window.location をテスト用オブジェクトへ差し替える必要があります。
-     */
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: originalLocation,
-    });
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'google',
+      })
+    );
   });
 
   it('checkAuth が成功したときにユーザー情報を設定すること', async () => {
-    const mockUser = { id: '123', email: 'test@example.com', name: 'Test User' };
-    (fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ user: mockUser }),
-    });
+    const mockUser = {
+      id: 'u123',
+      email: 'test@example.com',
+      user_metadata: {
+        full_name: 'Test User',
+        avatar_url: 'http://example.com/avatar.png',
+      },
+    };
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: mockUser } },
+      error: null,
+    } as any);
 
     const { checkAuth } = useAuthStore.getState();
     await checkAuth();
 
     const state = useAuthStore.getState();
-    expect(state.currentUser).toEqual(mockUser);
+    expect(state.currentUser).toEqual({
+      id: 'u123',
+      email: 'test@example.com',
+      name: 'Test User',
+      picture: 'http://example.com/avatar.png',
+    });
     expect(state.isLoggedIn).toBe(true);
     expect(state.isLoading).toBe(false);
   });
 
   it('checkAuth でユーザーが見つからない場合にログイン状態を解除すること', async () => {
-    (fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ user: null }),
-    });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null },
+      error: null,
+    } as any);
 
     // ログイン状態から開始
     useAuthStore.setState({ isLoggedIn: true, currentUser: { id: '1', email: 'a@b.com', name: 'A' } });
@@ -86,7 +113,7 @@ describe('useAuthStore', () => {
   });
 
   it('checkAuth が失敗したときにエラーを設定すること', async () => {
-    (fetch as any).mockRejectedValue(new Error('Network Error'));
+    vi.mocked(supabase.auth.getSession).mockRejectedValue(new Error('Network Error'));
 
     const { checkAuth } = useAuthStore.getState();
     await checkAuth();
@@ -97,21 +124,19 @@ describe('useAuthStore', () => {
     expect(state.isLoading).toBe(false);
   });
 
-  it('logout がログアウトエンドポイントにリダイレクトすること', () => {
-    const originalLocation = window.location;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).location;
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      value: { ...originalLocation, href: '' } as Location,
-    });
-
+  it('logout が supabase.auth.signOut を呼び出すこと', async () => {
     const { logout } = useAuthStore.getState();
-    logout();
+    
+    // window.location.href のモック
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = { ...originalLocation, href: '' } as any;
 
-    expect(window.location.href).toContain('/api/auth/logout');
-    expect(useAuthStore.getState().isLoading).toBe(true);
+    await logout();
 
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(useAuthStore.getState().isLoggedIn).toBe(false);
+    
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: originalLocation,
@@ -136,5 +161,19 @@ describe('useAuthStore', () => {
     const { setError } = useAuthStore.getState();
     setError('Test Error');
     expect(useAuthStore.getState().error).toBe('Test Error');
+  });
+
+  it('createProfile がプロファイルを作成し、状態を更新すること', async () => {
+    const mockUser = { id: 'u1', email: 'u1@test.com', name: 'User 1' };
+    useAuthStore.setState({ currentUser: mockUser, isLoggedIn: true });
+
+    const { createProfile } = useAuthStore.getState();
+    await createProfile('New Board');
+
+    const state = useAuthStore.getState();
+    expect(state.currentProfiles).toHaveLength(1);
+    expect(state.currentProfiles[0].name).toBe('Profile 1'); // Mock returns 'Profile 1'
+    expect(state.currentProfileId).toBe('p1');
+    expect(state.isLoading).toBe(false);
   });
 });

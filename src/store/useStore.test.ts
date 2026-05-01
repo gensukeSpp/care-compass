@@ -14,7 +14,8 @@ vi.mock('../services/tasksSyncService', () => ({
 vi.mock('./useAuthStore', () => ({
   useAuthStore: {
     getState: vi.fn(() => ({
-      currentUser: { name: 'Test Author' }
+      currentUser: { name: 'Test Author' },
+      currentProfileId: 'test-profile-id'
     }))
   }
 }));
@@ -35,6 +36,7 @@ describe('useStore', () => {
     const notes = useStore.getState().notes;
     expect(notes.length).toBe(initialNotesCount + 1);
     expect(notes[notes.length - 1].title).toBe('Test Note');
+    expect(notes[notes.length - 1].profile_id).toBe('test-profile-id');
   });
 
   it('should add a note to pending when status is pending', () => {
@@ -192,9 +194,10 @@ describe('useStore', () => {
     const noteId = useStore.getState().notes.slice(-1)[0].id;
 
     // 作者名を変更してモックを更新
-    (useAuthStore.getState as any).mockReturnValue({
-      currentUser: { name: 'Second Author' }
-    });
+    vi.mocked(useAuthStore.getState).mockReturnValue({
+      currentUser: { name: 'Second Author', id: 'u2', email: 'u2@test.com' },
+      currentProfileId: 'test-profile-id'
+    } as unknown as ReturnType<typeof useAuthStore.getState>);
 
     updateNoteContent(noteId, 'Updated Content');
 
@@ -204,9 +207,10 @@ describe('useStore', () => {
   });
 
   it('should add a pending note with authorName', () => {
-    (useAuthStore.getState as any).mockReturnValue({
-      currentUser: { name: 'Pending Author' }
-    });
+    vi.mocked(useAuthStore.getState).mockReturnValue({
+      currentUser: { name: 'Pending Author', id: 'u3', email: 'u3@test.com' },
+      currentProfileId: 'test-profile-id'
+    } as unknown as ReturnType<typeof useAuthStore.getState>);
     const { addPendingNote } = useStore.getState();
 
     addPendingNote('Pending Auth', 'Content', 'social');

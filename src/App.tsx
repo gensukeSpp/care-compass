@@ -63,7 +63,7 @@ function App() {
       <main className="flex-1 relative overflow-hidden">
         <Routes>
           <Route path="/" element={<BoardPage />} />
-          <Route path="/auth/google/callback" element={<AuthCallback />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
       </main>
     </div>

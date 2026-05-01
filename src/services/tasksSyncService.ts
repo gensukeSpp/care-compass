@@ -15,7 +15,10 @@ export interface GoogleTaskList {
   updated: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { getApiBaseUrl } from '../utils/api';
+
+const API_BASE = getApiBaseUrl();
+console.log(`API_BASE: ${API_BASE}`);
 
 export const tasksSyncService = {
   /**
