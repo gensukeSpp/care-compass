@@ -21,11 +21,13 @@ vi.mock('../lib/supabase', () => {
       }),
     }),
   });
+  const mockRpc = vi.fn().mockResolvedValue({ data: { id: 'p1', name: 'Profile 1' }, error: null });
 
   return {
     supabase: {
       auth: mockAuth,
       from: mockFrom,
+      rpc: mockRpc,
     },
   };
 });

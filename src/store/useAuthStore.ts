@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
-import type { Profile } from '../types/index';
+import type { Member, Profile } from '../types/index';
 
 interface User {
   id: string;
@@ -76,8 +76,6 @@ export const useAuthStore = create<AuthState>()(
 
       login: async () => {
         set({ isLoading: true, error: null });
-        console.log(`Callback URL: ${window.location.href}`);
-        console.log(`Current Location: ${window.location.origin}`);
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -126,7 +124,7 @@ export const useAuthStore = create<AuthState>()(
 
             if (membersError) throw membersError;
 
-            const profiles = (members as any[] || [])
+            const profiles = (members as Member[] || [])
               .map((m) => Array.isArray(m.profiles) ? m.profiles[0] : m.profiles)
               .filter((p): p is Profile => !!p);
 
@@ -143,6 +141,8 @@ export const useAuthStore = create<AuthState>()(
           set({
             error: err instanceof Error ? err.message : '認証チェックに失敗しました',
             isLoggedIn: false,
+            currentUser: null,
+            currentProfiles: []
           });
         } finally {
           set({ isLoading: false });
@@ -161,25 +161,10 @@ export const useAuthStore = create<AuthState>()(
 
         set({ isLoading: true, error: null });
         try {
-          // 1. profiles テーブルに新規作成
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .insert({ name, created_by: currentUser.id })
-            .select()
-            .single();
+          // profiles テーブルと board_members テーブルを単一トランザクションで処理
+          const { data: profile, error } = await supabase.rpc('create_profile_with_owner', { p_name: name });
 
-          if (profileError) throw profileError;
-
-          // 2. board_members テーブルにオーナーとして登録
-          const { error: memberError } = await supabase
-            .from('board_members')
-            .insert({
-              profile_id: profile.id,
-              user_id: currentUser.id,
-              role: 'owner'
-            });
-
-          if (memberError) throw memberError;
+          if (error) throw error;
 
           const updatedProfiles = [...get().currentProfiles, profile];
           set({

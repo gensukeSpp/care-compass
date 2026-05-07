@@ -11,6 +11,9 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss()
   ],
+  build: {
+    chunkSizeWarningLimit: 100000000,
+  },
   server: {
     proxy: {
       '/api': {

@@ -11,14 +11,22 @@ vi.mock('../services/tasksSyncService', () => ({
 }));
 
 // useAuthStore をモックする
+// セレクタ関数を受け取ってそれを実行する
+const mockAuthState = {
+  currentUser: { name: 'Test Author', id: 'u1', email: 'u1@test.com' },
+  currentProfileId: 'test-profile-id'
+};
+
 vi.mock('./useAuthStore', () => ({
-  useAuthStore: {
-    getState: vi.fn(() => ({
-      currentUser: { name: 'Test Author' },
-      currentProfileId: 'test-profile-id'
-    }))
-  }
+  useAuthStore: vi.fn((selector) => {
+    if (typeof selector === 'function') {
+      return selector(mockAuthState);
+    }
+    return mockAuthState;
+  })
 }));
+
+
 
 describe('useStore', () => {
   beforeEach(() => {
@@ -194,10 +202,7 @@ describe('useStore', () => {
     const noteId = useStore.getState().notes.slice(-1)[0].id;
 
     // 作者名を変更してモックを更新
-    vi.mocked(useAuthStore.getState).mockReturnValue({
-      currentUser: { name: 'Second Author', id: 'u2', email: 'u2@test.com' },
-      currentProfileId: 'test-profile-id'
-    } as unknown as ReturnType<typeof useAuthStore.getState>);
+    mockAuthState.currentUser = { name: 'Second Author', id: 'u2', email: 'u2@test.com' };
 
     updateNoteContent(noteId, 'Updated Content');
 
@@ -207,10 +212,7 @@ describe('useStore', () => {
   });
 
   it('should add a pending note with authorName', () => {
-    vi.mocked(useAuthStore.getState).mockReturnValue({
-      currentUser: { name: 'Pending Author', id: 'u3', email: 'u3@test.com' },
-      currentProfileId: 'test-profile-id'
-    } as unknown as ReturnType<typeof useAuthStore.getState>);
+    mockAuthState.currentUser = { name: 'Pending Author', id: 'u3', email: 'u3@test.com' };
     const { addPendingNote } = useStore.getState();
 
     addPendingNote('Pending Auth', 'Content', 'social');
@@ -240,7 +242,7 @@ describe('useStore', () => {
 
   it('should sync tasks and handle deduplication', async () => {
     const { syncTasks, addPendingNote } = useStore.getState();
-    
+
     // すでに存在する googleTaskId を持つノートを追加
     addPendingNote('Existing Task', 'Content', 'house');
     const existingNote = useStore.getState().pendingNotes[0];
