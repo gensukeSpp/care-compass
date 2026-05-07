@@ -1,47 +1,22 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { getApiBaseUrl } from '../utils/api';
 
 /**
- * Google OAuth 2.0 のコールバックを処理するページコンポーネント
+ * Supabase Auth / Google OAuth 2.0 のコールバックを処理するページコンポーネント
  */
 export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const checkAuth = useAuthStore((state) => state.checkAuth);
   const setError = useAuthStore((state) => state.setError);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const code = searchParams.get('code');
-    const state = searchParams.get('state');
-
-    if (!code) {
-      setError('認可コードが見つかりません');
-      navigate('/');
-      return;
-    }
-
     const handleCallback = async () => {
       try {
-        const API_BASE_URL = getApiBaseUrl();
-        // バックエンドのコールバックエンドポイントを呼び出す
-        // バックエンドが 302 Redirect を返すと fetch は自動で追従するが、
-        // Cookie はブラウザによって保存される。
-        const response = await fetch(`${API_BASE_URL}/api/auth/google/callback?code=${code}&state=${state}`, {
-          // Cookie（session等）を確実に受け取るため
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          // セッション確立後に最新のユーザー情報を取得してストアを更新
-          await checkAuth();
-          navigate('/');
-        } else {
-          setError('認証に失敗しました');
-          navigate('/');
-        }
+        // Supabase Auth は URL のハッシュ/クエリから自動的にセッションを確立する
+        // ここではストアの状態を最新にするために checkAuth を呼び出す
+        await checkAuth();
+        navigate('/');
       } catch (err) {
         setError(err instanceof Error ? err.message : '認証処理中にエラーが発生しました');
         navigate('/');
@@ -49,7 +24,7 @@ export const AuthCallback: React.FC = () => {
     };
 
     handleCallback();
-  }, [location, navigate, checkAuth, setError]);
+  }, [navigate, checkAuth, setError]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">

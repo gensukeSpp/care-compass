@@ -51,12 +51,13 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Markdown Batch Import (2):** Keyword-based automatic classification (Category/Status).
 - [ ] **Markdown Batch Import (3):** AI-enhanced context analysis & summarization.
 - [x] **Google Tasks to Pending Box (Issue #29):** Support for selecting task lists and tasks to import into Pending Box.
-- [x] **Google Keep Integration (Auth):** Implementation of OAuth 2.0 and session management (Zustand + Cloudflare Workers).
-- [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box.
+- [x] **Supabase Auth Migration:** Transitioned from custom Worker auth to official Supabase Auth SDK (Google OAuth). Fixed UUID type mismatches and enabled proper RLS using `auth.uid()`.
+- [x] **Owner Registration during Board Creation (Issue #31):** Successfully implemented `profiles` and `board_members` registration when creating a new board.
+- [ ] **Dashboard & Board Selection (Issue #36):** Implement a dedicated landing page to list accessible boards, allow switching, and trigger new board creation.
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
-- [ ] **Dashboard:** Subject selection screen (e.g., Father, Mother).
+- [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box (Workspace accounts only).
 - [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.
-- [ ] **Potential Backend Integration:** Supabase for real-time family sharing and auth.
+- [ ] **Full Data Sync:** Synchronize all notes and board state with Supabase DB.
 
 ## 5. Directory Structure
 ```
@@ -64,20 +65,20 @@ src/
 ├── assets/             # Images, Icons, Global CSS
 ├── components/         # UI Components
 │   ├── auth/           # Login/Logout Buttons
-│   ├── common/         # Buttons, Forms, Modals
+│   ├── common/         # Buttons, Forms, Modals (CreateProfileModal)
 │   ├── board/          # Board, Grid, Quadrants
 │   ├── sticky-note/    # Sticky Note item
 │   ├── note-modal/     # Detail View, Editor, History, MD Renderer
-│   └── pending/        # Pending Box Drawer, Import items
+│   └── pending/        # Pending Box Drawer, Import items, TasksModal
 ├── hooks/              # D&D Logic, File Import, Resize handling
-├── lib/                # External Lib Configs
-├── pages/              # AuthCallback page
-├── services/           # Google Keep API, AI Services, External Sync
+├── lib/                # External Lib Configs (supabase.ts)
+├── pages/              # AuthCallback, DashboardPage (Planned)
+├── services/           # External Sync (Tasks, AI Services)
 ├── store/              # Zustand Store (State Management, Auth Store)
 ├── types/              # TypeScript Definitions
-├── utils/              # Coordinate Calc, Date Formatting, MD Splitting
-├── workers/            # Cloudflare Workers (Auth API)
-├── App.tsx             # Main Layout & Drag Context
+├── utils/              # Coordinate Calc, API Helpers, MD Splitting
+├── workers/            # Cloudflare Workers (Auth API proxy)
+├── App.tsx             # Main Layout & Routing
 └── main.tsx            # Entry point
 ```
 

@@ -40,6 +40,7 @@ interface BoardState {
 function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string, googleTaskId?: string): Note {
 	let x = 5;
 	let y = 5;
+	const profile_id = useAuthStore((state) => state.currentProfileId || '');
 
 	switch (status) {
 		case 'can':
@@ -58,7 +59,7 @@ function createNote(title: string, content: string, category: Category, status: 
 
 	return {
 		id: uuidv4(),
-		profile_id: '', // ← ADD THIS #31
+		profile_id,
 		title,
 		content,
 		category,
@@ -71,6 +72,7 @@ function createNote(title: string, content: string, category: Category, status: 
 		history: [],
 	};
 }
+
 export const useStore = create<BoardState>()(
 	persist(
 		(set) => ({
@@ -85,7 +87,7 @@ export const useStore = create<BoardState>()(
 				set((state) => {
 					// notes か pendingNotes のどちらかにあるか探して更新
 					const isInNotes = state.notes.some(n => n.id === id);
-					const authorName = useAuthStore.getState().currentUser?.name;
+					const authorName = useAuthStore((state) => state.currentUser?.name);
 					if (isInNotes) {
 						return {
 							notes: state.notes.map((n) => (n.id === id ? { ...n, content, authorName } : n))
@@ -98,7 +100,7 @@ export const useStore = create<BoardState>()(
 				}),
 			addNote: (title, content, category, status) =>
 				set((state) => {
-					const authorName = useAuthStore.getState().currentUser?.name;
+					const authorName = useAuthStore((state) => state.currentUser?.name);
 					const newNote = createNote(title, content, category, status, authorName);
 					if (status === 'pending') {
 						return {
@@ -112,7 +114,7 @@ export const useStore = create<BoardState>()(
 				}),
 			addPendingNote: (title, content, category) =>
 				set((state) => {
-					const authorName = useAuthStore.getState().currentUser?.name;
+					const authorName = useAuthStore((state) => state.currentUser?.name);
 					return {
 						pendingNotes: [
 							createNote(title, content, category, 'pending', authorName),
@@ -122,7 +124,7 @@ export const useStore = create<BoardState>()(
 				}),
 			addPendingNotes: (newNotes) =>
 				set((state) => {
-					const authorName = useAuthStore.getState().currentUser?.name;
+					const authorName = useAuthStore((state) => state.currentUser?.name);
 					return {
 						pendingNotes: [
 							...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending', authorName, n.googleTaskId)),
@@ -289,7 +291,7 @@ export const useStore = create<BoardState>()(
 			},
 			syncTasks: async () => {
 				const { pendingNotes, notes } = useStore.getState();
-				const authorName = useAuthStore.getState().currentUser?.name;
+				const authorName = useAuthStore((state) => state.currentUser?.name);
 
 				try {
 					const tasks = await tasksSyncService.fetchTasks();

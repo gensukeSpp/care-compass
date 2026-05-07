@@ -34,3 +34,8 @@ export interface Profile {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface Member {
+  profile_id: string;
+  profiles: Profile[];
+}
