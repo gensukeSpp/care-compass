@@ -72,7 +72,7 @@ src/
 │   └── pending/        # Pending Box Drawer, Import items, TasksModal
 ├── hooks/              # D&D Logic, File Import, Resize handling
 ├── lib/                # External Lib Configs (supabase.ts)
-├── pages/              # AuthCallback, DashboardPage (Planned)
+├── pages/              # AuthCallback, DashboardPage
 ├── services/           # External Sync (Tasks, AI Services)
 ├── store/              # Zustand Store (State Management, Auth Store)
 ├── types/              # TypeScript Definitions
@@ -85,5 +85,7 @@ src/
 ## 6. Development Commands
 - `bun run dev`: Start dev server
 - `bun run build`: Build for production
+- `bun run lint`: Linting
+- `bun run test`: Run tests
 - `bun run lint`: Linting
 - `bun run test`: Run tests

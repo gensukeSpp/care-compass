@@ -9,16 +9,15 @@ import { useContainerResize } from '../../hooks/useContainerResize';
 import { useDragOnBoard } from '../../hooks/useDragOnBoard';
 import { StickyNoteView } from '../../components/sticky-note/StickyNoteView';
 import { useAuthStore } from '../../store/useAuthStore';
-import { CreateProfileModal } from '../../components/common/CreateProfileModal';
 
 /**
- * メインのボード画面コンポーネント
+ * メインのボード画面コンポーネントです。選択されたプロファイルの付箋ボードを表示し、ドラッグ＆ドロップ操作を管理します。
+ * @return :React.FC ボード画面コンポーネント
  */
 export const BoardPage: React.FC = () => {
   const { handleDragStart, handleDragEnd, activeId, notes, pendingNotes, boardRef } = useDragOnBoard();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const currentProfileId = useAuthStore((state) => state.currentProfileId);
-  const currentProfiles = useAuthStore((state) => state.currentProfiles);
   const isLoading = useAuthStore((state) => state.isLoading);
   const login = useAuthStore((state) => state.login);
 
@@ -73,9 +72,13 @@ export const BoardPage: React.FC = () => {
     );
   }
 
-  // 3. ログインしているがプロファイルがない場合
-  if (currentProfiles.length === 0) {
-    return <CreateProfileModal />;
+  // 3. プロファイルが選択されていない場合
+  if (!currentProfileId) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
   }
 
   // 4. プロファイルが選択されている場合
