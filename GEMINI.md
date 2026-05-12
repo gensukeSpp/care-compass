@@ -72,7 +72,7 @@ src/
 │   └── pending/        # Pending Box Drawer, Import items, TasksModal
 ├── hooks/              # D&D Logic, File Import, Resize handling
 ├── lib/                # External Lib Configs (supabase.ts)
-├── pages/              # AuthCallback, DashboardPage (Planned)
+├── pages/              # AuthCallback, DashboardPage
 ├── services/           # External Sync (Tasks, AI Services)
 ├── store/              # Zustand Store (State Management, Auth Store)
 ├── types/              # TypeScript Definitions

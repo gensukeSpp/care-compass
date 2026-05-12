@@ -12,9 +12,9 @@ Purpose: help future Copilot CLI / code-assistant sessions operate effectively i
 - Test (runner): bun run test  (Vitest)
 
 Run a single test file or pattern:
-- npm/bun: npm run test -- path/to/file.spec.ts
-- direct vitest: npx vitest run path/to/file.spec.ts
-- run a single test name: npx vitest -t "partial test name"
+- Use npm/bun for normal workflows: `npm run test -- path/to/file.spec.ts` or `bun run test -- path/to/file.spec.ts`
+- Use direct Vitest when you need a custom CLI invocation or want to avoid package-script wrappers: `npx vitest run path/to/file.spec.ts`
+- Use the single test name option for debugging a specific test: `npx vitest -t "partial test name"`
 
 Note: this repo's package.json scripts are authoritative (see package.json).
 

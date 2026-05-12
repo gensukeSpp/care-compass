@@ -9,22 +9,35 @@ export interface History {
   from: QuadrantId;
   to: QuadrantId;
   timestamp: string;
+  // 次回実装分 5/8
+  // id: string;
+  // note_id: string;
+  // from_status: QuadrantId;
+  // to_status: QuadrantId;
+  // created_at: string;
+  // user_id?: string;
 }
 
 export interface Note {
   id: string;
-  profile_id: string; // ← ADD THIS #31
+  profile_id: string;
   title: string;
   category: Category;
   status: QuadrantId;
   content: string; // Markdown形式
   updatedAt?: string;
   authorName?: string;
+  // 次回実装分 5/8
+  // updated_at?: string;
+  // created_at?: string;
+  // author_id?: string;
   // Position as percentages (0-100)
   x: number;
   y: number;
   history?: History[];
   googleTaskId?: string;
+  // 次回実装分 5/8
+  // google_task_id?: string;
 }
 
 export interface Profile {

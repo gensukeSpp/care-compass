@@ -1,4 +1,3 @@
-import { forwardRef, type ComponentPropsWithRef, type JSX } from 'react';
 import { BoardBackground } from './BoardBackground';
 import { StickyNote } from '../sticky-note/StickyNote';
 import { useDropOnBoard } from '../../hooks/useDropMdFile';

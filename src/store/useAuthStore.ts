@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 import type { Member, Profile } from '../types/index';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
@@ -54,6 +54,12 @@ interface AuthState {
    *  profileId :string - 選択するプロファイルID
    */
   selectProfile: (profileId: string) => void;
+
+  /**
+   * 現在選択されているプロファイルの選択を解除します。
+   * @return :void 戻り値はありません
+   */
+  deselectProfile: () => void;
 
   /**
    * 新しいプロファイル（対象者）を作成し、作成者をオーナーとして登録します。
@@ -114,8 +120,6 @@ export const useAuthStore = create<AuthState>()(
               picture: session.user.user_metadata.avatar_url || session.user.user_metadata.picture,
             };
 
-            set({ currentUser: user, isLoggedIn: true });
-
             // Supabase からプロファイル一覧を取得
             const { data: members, error: membersError } = await supabase
               .from('board_members')
@@ -128,11 +132,12 @@ export const useAuthStore = create<AuthState>()(
               .map((m) => Array.isArray(m.profiles) ? m.profiles[0] : m.profiles)
               .filter((p): p is Profile => !!p);
 
-            set({ currentProfiles: profiles });
-
-            if (profiles.length > 0 && !get().currentProfileId) {
-              set({ currentProfileId: profiles[0].id });
-            }
+            // ユーザー情報とプロファイル一覧を同時に設定
+            set({
+              currentUser: user,
+              isLoggedIn: true,
+              currentProfiles: profiles
+            });
           } else {
             set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null });
           }
@@ -154,6 +159,8 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ currentUser: user, isLoggedIn: !!user }),
 
       selectProfile: (profileId) => set({ currentProfileId: profileId }),
+
+      deselectProfile: () => set({ currentProfileId: null }),
 
       createProfile: async (name) => {
         const { currentUser } = get();
@@ -192,4 +199,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-

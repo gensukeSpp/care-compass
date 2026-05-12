@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { X, UserPlus } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface CreateProfileModalProps {
 
 export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose }) => {
   const [name, setName] = useState('');
+  const navigate = useNavigate();
   const createProfile = useAuthStore((state) => state.createProfile);
   const isLoading = useAuthStore((state) => state.isLoading);
   const error = useAuthStore((state) => state.error);
@@ -19,6 +21,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
     try {
       await createProfile(name.trim());
       if (onClose) onClose();
+      navigate('/');
     } catch (err) {
       console.error('Failed to create profile:', err);
     }
@@ -78,7 +81,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
               )}
             </button>
           </div>
-          
+
           <p className="text-center text-xs text-gray-500 px-4">
             ボードを作成すると、あなたがオーナーとして登録されます。
             後から他の家族を招待することも可能です。
