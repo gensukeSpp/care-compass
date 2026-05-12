@@ -87,5 +87,3 @@ src/
 - `bun run build`: Build for production
 - `bun run lint`: Linting
 - `bun run test`: Run tests
-- `bun run lint`: Linting
-- `bun run test`: Run tests

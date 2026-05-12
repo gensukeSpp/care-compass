@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 import type { Member, Profile } from '../types/index';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
@@ -133,10 +133,10 @@ export const useAuthStore = create<AuthState>()(
               .filter((p): p is Profile => !!p);
 
             // ユーザー情報とプロファイル一覧を同時に設定
-            set({ 
-              currentUser: user, 
+            set({
+              currentUser: user,
               isLoggedIn: true,
-              currentProfiles: profiles 
+              currentProfiles: profiles
             });
           } else {
             set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null });
