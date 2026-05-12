@@ -6,16 +6,16 @@ export type Category = 'house' | 'food' | 'health' | 'medical' | 'social';
 
 // 付箋の型定義 (Unified)
 export interface History {
-  from: QuadrantId;
-  to: QuadrantId;
-  timestamp: string;
-  // 次回実装分 5/8
-  // id: string;
-  // note_id: string;
-  // from_status: QuadrantId;
-  // to_status: QuadrantId;
-  // created_at: string;
-  // user_id?: string;
+  id: string;
+  note_id: string;
+  from_status: QuadrantId;
+  to_status: QuadrantId;
+  user_id: string;
+  created_at: string;
+  // UI用途
+  from?: QuadrantId;
+  to?: QuadrantId;
+  timestamp?: string;
 }
 
 export interface Note {
@@ -25,19 +25,18 @@ export interface Note {
   category: Category;
   status: QuadrantId;
   content: string; // Markdown形式
-  updatedAt?: string;
-  authorName?: string;
-  // 次回実装分 5/8
-  // updated_at?: string;
-  // created_at?: string;
-  // author_id?: string;
-  // Position as percentages (0-100)
   x: number;
   y: number;
+  author_id?: string;
+  google_task_id?: string;
+  created_at?: string;
+  updated_at?: string;
+
+  // UI用途の互換性維持
+  updatedAt?: string;
+  authorName?: string;
   history?: History[];
   googleTaskId?: string;
-  // 次回実装分 5/8
-  // google_task_id?: string;
 }
 
 export interface Profile {

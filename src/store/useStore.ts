@@ -2,322 +2,465 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { Category, QuadrantId, Note } from '../types/index';
+import type { Category, QuadrantId, Note, History } from '../types/index';
 import { getQuadrantFromPosition } from '../utils/positionUtils';
-import { INITIAL_NOTE, INITIAL_PENDING_NOTES } from './initialData';
 import { useAuthStore } from './useAuthStore';
 import { tasksSyncService } from '../services/tasksSyncService';
+import { supabase } from '../lib/supabase';
 
 interface BoardState {
 	notes: Note[];
+	pendingNotes: Note[];
 	selectedNoteId: string | null;
 	containerDimensions: { width: number; height: number };
+	isLoading: boolean;
+	error: string | null;
+
+	// Actions
+	fetchNotes: (profileId: string) => Promise<void>;
+	fetchNoteHistory: (noteId: string) => Promise<void>;
 	selectNote: (id: string | null) => void;
-	updateNoteContent: (id: string, content: string) => void;
-	addNote: (title: string, content: string, category: Category, status: QuadrantId) => void;
-	updateNote: (id: string, updates: Partial<Note>) => void;
-	deleteNote: (id: string) => void;
+	updateNoteContent: (id: string, content: string) => Promise<void>;
+	addNote: (title: string, content: string, category: Category, status: QuadrantId) => Promise<void>;
+	updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+	deleteNote: (id: string) => Promise<void>;
 	setContainerDimensions: (width: number, height: number) => void;
-	updateNoteStatus: (id: string, newStatus: QuadrantId) => void;
-	updateNotePositionAndStatus: (id: string, x: number, y: number) => void;
-	// 「ファイルから読み込んだ一時的な内容」を管理する状態を追加
+	updateNoteStatus: (id: string, newStatus: QuadrantId) => Promise<void>;
+	updateNotePositionAndStatus: (id: string, x: number, y: number) => Promise<void>;
+
+	// Add Form
 	isAddFormOpen: boolean;
 	draftContent: string;
 	openAddForm: () => void;
 	closeAddForm: () => void;
 	setDraftContent: (content: string) => void;
+
 	// Pending
-	pendingNotes: Note[]; // 追加
-	addPendingNote: (title: string, content: string, category: Category) => void; // 追加
-	addPendingNotes: (newNotes: { title: string; content: string; category: Category; googleTaskId?: string }[]) => void; // 追加
-	moveToPending: (id: string) => void; // 追加
-	moveToBoard: (id: string, x: number, y: number) => void; // 追加
-	mergeNotes: (sourceId: string, targetId: string) => void; // 追加
+	addPendingNote: (title: string, content: string, category: Category) => Promise<void>;
+	addPendingNotes: (newNotes: { title: string; content: string; category: Category; googleTaskId?: string }[]) => Promise<void>;
+	moveToPending: (id: string) => Promise<void>;
+	moveToBoard: (id: string, x: number, y: number) => Promise<void>;
+	mergeNotes: (sourceId: string, targetId: string) => Promise<void>;
+
 	// Tasks
-	syncTasks: () => Promise<void>; // 追加
-}
-
-function createNote(title: string, content: string, category: Category, status: QuadrantId, authorName?: string, googleTaskId?: string): Note {
-	let x = 5;
-	let y = 5;
-	const profile_id = useAuthStore((state) => state.currentProfileId || '');
-
-	switch (status) {
-		case 'can':
-			x = 5; y = 5; break;
-		case 'cannot':
-			x = 55; y = 5; break;
-		case 'risk':
-			x = 5; y = 55; break;
-		case 'request':
-			x = 55; y = 55; break;
-		case 'pending':
-			x = 0; y = 0; break; // drawer内では座標は不要
-		default:
-			x = 40; y = 40; // central area for neutral
-	}
-
-	return {
-		id: uuidv4(),
-		profile_id,
-		title,
-		content,
-		category,
-		status,
-		authorName,
-		googleTaskId,
-		x,
-		y,
-		updatedAt: new Date().toISOString(),
-		history: [],
-	};
+	syncTasks: () => Promise<void>;
 }
 
 export const useStore = create<BoardState>()(
 	persist(
-		(set) => ({
-			notes: INITIAL_NOTE,
-			pendingNotes: INITIAL_PENDING_NOTES, // 初期データをセット
+		(set, get) => ({
+			notes: [],
+			pendingNotes: [],
 			selectedNoteId: null,
-			containerDimensions: { width: 1024, height: 768 }, // デフォルト値
-			selectNote: (id) => set({ selectedNoteId: id }),
+			containerDimensions: { width: 1024, height: 768 },
+			isLoading: false,
+			error: null,
+
+			fetchNotes: async (profileId) => {
+				set({ isLoading: true, error: null });
+				try {
+					const { data, error } = await supabase
+						.from('sticky_notes')
+						.select('*')
+						.eq('profile_id', profileId)
+						.order('created_at', { ascending: true });
+
+					if (error) throw error;
+
+					const allNotes = data as Note[];
+					set({
+						notes: allNotes.filter(n => n.status !== 'pending'),
+						pendingNotes: allNotes.filter(n => n.status === 'pending'),
+						isLoading: false
+					});
+				} catch (err) {
+					set({
+						error: err instanceof Error ? err.message : '付箋の取得に失敗しました',
+						isLoading: false
+					});
+				}
+			},
+
+			fetchNoteHistory: async (noteId: string) => {
+				try {
+					const { data, error } = await supabase
+						.from('note_history')
+						.select('*')
+						.eq('note_id', noteId)
+						.order('created_at', { ascending: false });
+
+					if (error) throw error;
+
+					const history = (data as any[]).map(h => ({
+						...h,
+						from: h.from_status,
+						to: h.to_status,
+						timestamp: h.created_at
+					})) as History[];
+
+					set(state => ({
+						notes: state.notes.map(n => n.id === noteId ? { ...n, history } : n),
+						pendingNotes: state.pendingNotes.map(n => n.id === noteId ? { ...n, history } : n)
+					}));
+				} catch (err) {
+					console.error('Failed to fetch note history:', err);
+				}
+			},
+
+			selectNote: (id) => {
+				set({ selectedNoteId: id });
+				if (id) {
+					get().fetchNoteHistory(id);
+				}
+			},
+
 			setContainerDimensions: (width, height) =>
 				set({ containerDimensions: { width, height } }),
-			updateNoteContent: (id, content) =>
-				set((state) => {
-					// notes か pendingNotes のどちらかにあるか探して更新
-					const isInNotes = state.notes.some(n => n.id === id);
-					const authorName = useAuthStore((state) => state.currentUser?.name);
-					if (isInNotes) {
-						return {
-							notes: state.notes.map((n) => (n.id === id ? { ...n, content, authorName } : n))
-						};
-					} else {
-						return {
-							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, content, authorName } : n))
-						};
-					}
-				}),
-			addNote: (title, content, category, status) =>
-				set((state) => {
-					const authorName = useAuthStore((state) => state.currentUser?.name);
-					const newNote = createNote(title, content, category, status, authorName);
+
+			updateNoteContent: async (id, content) => {
+				const { notes, pendingNotes } = get();
+				const note = notes.find(n => n.id === id) || pendingNotes.find(n => n.id === id);
+				if (!note) return;
+
+				try {
+					const { error } = await supabase
+						.from('sticky_notes')
+						.update({ content, updated_at: new Date().toISOString() })
+						.eq('id', id);
+
+					if (error) throw error;
+
+					set({
+						notes: notes.map(n => n.id === id ? { ...n, content } : n),
+						pendingNotes: pendingNotes.map(n => n.id === id ? { ...n, content } : n)
+					});
+				} catch (err) {
+					console.error('Failed to update note content:', err);
+				}
+			},
+
+			addNote: async (title, content, category, status) => {
+				const profile_id = useAuthStore.getState().currentProfileId;
+				const author_id = useAuthStore.getState().currentUser?.id;
+				if (!profile_id) return;
+
+				let x = 5, y = 5;
+				switch (status) {
+					case 'can': x = 5; y = 5; break;
+					case 'cannot': x = 55; y = 5; break;
+					case 'risk': x = 5; y = 55; break;
+					case 'request': x = 55; y = 55; break;
+					case 'pending': x = 0; y = 0; break;
+				}
+
+				try {
+					const { data, error } = await supabase
+						.from('sticky_notes')
+						.insert([{
+							profile_id,
+							title,
+							content,
+							category,
+							status,
+							x,
+							y,
+							author_id
+						}])
+						.select()
+						.single();
+
+					if (error) throw error;
+
+					const newNote = data as Note;
 					if (status === 'pending') {
-						return {
-							pendingNotes: [newNote, ...state.pendingNotes]
-						};
+						set(state => ({ pendingNotes: [newNote, ...state.pendingNotes] }));
 					} else {
-						return {
-							notes: [...state.notes, newNote]
-						};
+						set(state => ({ notes: [...state.notes, newNote] }));
 					}
-				}),
-			addPendingNote: (title, content, category) =>
-				set((state) => {
-					const authorName = useAuthStore((state) => state.currentUser?.name);
-					return {
-						pendingNotes: [
-							createNote(title, content, category, 'pending', authorName),
-							...state.pendingNotes
-						],
-					};
-				}),
-			addPendingNotes: (newNotes) =>
-				set((state) => {
-					const authorName = useAuthStore((state) => state.currentUser?.name);
-					return {
-						pendingNotes: [
-							...newNotes.map(n => createNote(n.title, n.content, n.category, 'pending', authorName, n.googleTaskId)),
-							...state.pendingNotes
-						],
-					};
-				}),
-			updateNote: (id, updates) =>
-				set((state) => {
-					const isInNotes = state.notes.some(n => n.id === id);
-					if (isInNotes) {
-						return {
-							notes: state.notes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
-						};
-					} else {
-						return {
-							pendingNotes: state.pendingNotes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
-						};
-					}
-				}),
-			deleteNote: (id) =>
-				set((state) => ({
-					notes: state.notes.filter((n) => n.id !== id),
-					pendingNotes: state.pendingNotes.filter((n) => n.id !== id),
-					selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId, // 開いていたら閉じる
-				})),
-			updateNoteStatus: (id, newStatus) =>
-				set((state) => {
-					// 両方の配列から探す
-					const note = state.notes.find((n) => n.id === id) || state.pendingNotes.find(n => n.id === id);
-					if (!note || note.status === newStatus) return state;
-
-					const newHistoryEntry = {
-						from: note.status,
-						to: newStatus,
-						timestamp: new Date().toISOString(),
-					};
-
-					const updatedNote = {
-						...note,
-						status: newStatus,
-						history: [...(note.history || []), newHistoryEntry],
-					};
-
-					// 状態が変わった時に配列間を移動させるべきか検討
-					// status が 'pending' かどうかで所属配列を決める
-					if (newStatus === 'pending') {
-						return {
-							notes: state.notes.filter(n => n.id !== id),
-							pendingNotes: [updatedNote, ...state.pendingNotes.filter(n => n.id !== id)]
-						};
-					} else {
-						return {
-							notes: [...state.notes.filter(n => n.id !== id), updatedNote],
-							pendingNotes: state.pendingNotes.filter(n => n.id !== id)
-						};
-					}
-				}),
-			updateNotePositionAndStatus: (id, x, y) =>
-				set((state) => {
-					// 座標更新は基本 board上のノートが対象
-					const note = state.notes.find(n => n.id === id);
-					if (!note) return state;
-
-					const newStatus = getQuadrantFromPosition(x, y);
-					const statusChanged = note.status !== newStatus;
-
-					if (!statusChanged) {
-						return {
-							notes: state.notes.map(n => n.id === id ? { ...n, x, y } : n)
-						};
-					}
-
-					const newHistoryEntry = {
-						from: note.status,
-						to: newStatus,
-						timestamp: new Date().toISOString(),
-					};
-
-					const updatedNote = {
-						...note,
-						x,
-						y,
-						status: newStatus,
-						history: [...(note.history || []), newHistoryEntry],
-					};
-
-					// board内での status変更（象限移動）
-					// 'pending' になることは getQuadrantFromPosition の仕様上ないはずだが、汎用性のために一応
-					if (newStatus === 'pending') {
-						return {
-							notes: state.notes.filter(n => n.id !== id),
-							pendingNotes: [...state.pendingNotes.filter(n => n.id !== id), updatedNote]
-						};
-					} else {
-						return {
-							notes: state.notes.map(n => n.id === id ? updatedNote : n)
-						};
-					}
-				}),
-			moveToPending: (id) => {
-				const { updateNoteStatus } = useStore.getState();
-				updateNoteStatus(id, 'pending');
+				} catch (err) {
+					console.error('Failed to add note:', err);
+				}
 			},
-			moveToBoard: (id, x, y) => {
-				set((state) => {
-					const note = state.pendingNotes.find(n => n.id === id) || state.notes.find(n => n.id === id);
-					if (!note) return state;
 
-					const newStatus = getQuadrantFromPosition(x, y);
-					const newHistoryEntry = {
-						from: note.status,
-						to: newStatus,
-						timestamp: new Date().toISOString(),
-					};
-
-					const updatedNote = {
-						...note,
-						x,
-						y,
-						status: newStatus,
-						history: [...(note.history || []), newHistoryEntry],
-					};
-
-					return {
-						notes: [...state.notes.filter(n => n.id !== id), updatedNote],
-						pendingNotes: state.pendingNotes.filter(n => n.id !== id)
-					};
-				});
+			addPendingNote: async (title, content, category) => {
+				const { addNote } = get();
+				await addNote(title, content, category, 'pending');
 			},
-			mergeNotes: (sourceId, targetId) => {
-				set((state) => {
-					if (sourceId === targetId) return state;
 
-					const source = state.notes.find(n => n.id === sourceId) || state.pendingNotes.find(n => n.id === sourceId);
-					const target = state.notes.find(n => n.id === targetId) || state.pendingNotes.find(n => n.id === targetId);
+			addPendingNotes: async (newNotes) => {
+				const profile_id = useAuthStore.getState().currentProfileId;
+				const author_id = useAuthStore.getState().currentUser?.id;
+				if (!profile_id) return;
 
-					if (!source || !target) return state;
+				const notesToInsert = newNotes.map(n => ({
+					profile_id,
+					title: n.title,
+					content: n.content,
+					category: n.category,
+					status: 'pending' as QuadrantId,
+					x: 0,
+					y: 0,
+					author_id,
+					google_task_id: n.googleTaskId
+				}));
 
-					// 内容を追記
-					// データのポータビリティと一貫性のために、ISO 8601 形式（toISOString()）
-					const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toISOString()})\n${source.content}`;
+				try {
+					const { data, error } = await supabase
+						.from('sticky_notes')
+						.insert(notesToInsert)
+						.select();
 
-					const newHistoryEntry = {
-						from: source.status,
-						to: target.status,
-						timestamp: new Date().toISOString(),
-					};
+					if (error) throw error;
 
-					const updatedTarget = {
-						...target,
-						content: mergedContent,
-						updatedAt: new Date().toISOString(),
-						history: [...(target.history || []), newHistoryEntry]
-					};
+					set(state => ({
+						pendingNotes: [...(data as Note[]), ...state.pendingNotes]
+					}));
+				} catch (err) {
+					console.error('Failed to add pending notes:', err);
+				}
+			},
 
-					// 両方の配列をクリーンアップ
-					return {
+			updateNote: async (id, updates) => {
+				try {
+					const dbUpdates = { ...updates } as any;
+					// Map UI fields to DB fields if necessary
+					if (updates.googleTaskId) {
+						dbUpdates.google_task_id = updates.googleTaskId;
+						delete dbUpdates.googleTaskId;
+					}
+
+					const { error } = await supabase
+						.from('sticky_notes')
+						.update({ ...dbUpdates, updated_at: new Date().toISOString() })
+						.eq('id', id);
+
+					if (error) throw error;
+
+					set(state => ({
+						notes: state.notes.map(n => n.id === id ? { ...n, ...updates } : n),
+						pendingNotes: state.pendingNotes.map(n => n.id === id ? { ...n, ...updates } : n)
+					}));
+				} catch (err) {
+					console.error('Failed to update note:', err);
+				}
+			},
+
+			deleteNote: async (id) => {
+				try {
+					const { error } = await supabase
+						.from('sticky_notes')
+						.delete()
+						.eq('id', id);
+
+					if (error) throw error;
+
+					set(state => ({
+						notes: state.notes.filter(n => n.id !== id),
+						pendingNotes: state.pendingNotes.filter(n => n.id !== id),
+						selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId
+					}));
+				} catch (err) {
+					console.error('Failed to delete note:', err);
+				}
+			},
+
+			updateNoteStatus: async (id, newStatus) => {
+				const { notes, pendingNotes } = get();
+				const note = notes.find(n => n.id === id) || pendingNotes.find(n => n.id === id);
+				if (!note || note.status === newStatus) return;
+
+				const user_id = useAuthStore.getState().currentUser?.id;
+
+				try {
+					// Update note status
+					const { error: noteError } = await supabase
+						.from('sticky_notes')
+						.update({ status: newStatus, updated_at: new Date().toISOString() })
+						.eq('id', id);
+
+					if (noteError) throw noteError;
+
+					// Log history
+					if (user_id) {
+						await supabase
+							.from('note_history')
+							.insert([{
+								note_id: id,
+								from_status: note.status,
+								to_status: newStatus,
+								user_id
+							}]);
+					}
+
+					const updatedNote = { ...note, status: newStatus };
+
+					if (newStatus === 'pending') {
+						set({
+							notes: notes.filter(n => n.id !== id),
+							pendingNotes: [updatedNote, ...pendingNotes.filter(n => n.id !== id)]
+						});
+					} else {
+						set({
+							notes: [...notes.filter(n => n.id !== id), updatedNote],
+							pendingNotes: pendingNotes.filter(n => n.id !== id)
+						});
+					}
+				} catch (err) {
+					console.error('Failed to update note status:', err);
+				}
+			},
+
+			updateNotePositionAndStatus: async (id, x, y) => {
+				const { notes } = get();
+				const note = notes.find(n => n.id === id);
+				if (!note) return;
+
+				const newStatus = getQuadrantFromPosition(x, y);
+				const statusChanged = note.status !== newStatus;
+				const user_id = useAuthStore.getState().currentUser?.id;
+
+				try {
+					const updateData: any = { x, y, updated_at: new Date().toISOString() };
+					if (statusChanged) {
+						updateData.status = newStatus;
+					}
+
+					const { error: noteError } = await supabase
+						.from('sticky_notes')
+						.update(updateData)
+						.eq('id', id);
+
+					if (noteError) throw noteError;
+
+					if (statusChanged && user_id) {
+						await supabase
+							.from('note_history')
+							.insert([{
+								note_id: id,
+								from_status: note.status,
+								to_status: newStatus,
+								user_id
+							}]);
+					}
+
+					const updatedNote = { ...note, x, y, status: newStatus };
+					set({
+						notes: notes.map(n => n.id === id ? updatedNote : n)
+					});
+				} catch (err) {
+					console.error('Failed to update note position:', err);
+				}
+			},
+
+			moveToPending: async (id) => {
+				const { updateNoteStatus } = get();
+				await updateNoteStatus(id, 'pending');
+			},
+
+			moveToBoard: async (id, x, y) => {
+				const { notes, pendingNotes } = get();
+				const note = pendingNotes.find(n => n.id === id) || notes.find(n => n.id === id);
+				if (!note) return;
+
+				const newStatus = getQuadrantFromPosition(x, y);
+				const user_id = useAuthStore.getState().currentUser?.id;
+
+				try {
+					const { error: noteError } = await supabase
+						.from('sticky_notes')
+						.update({ x, y, status: newStatus, updated_at: new Date().toISOString() })
+						.eq('id', id);
+
+					if (noteError) throw noteError;
+
+					if (user_id) {
+						await supabase
+							.from('note_history')
+							.insert([{
+								note_id: id,
+								from_status: note.status,
+								to_status: newStatus,
+								user_id
+							}]);
+					}
+
+					const updatedNote = { ...note, x, y, status: newStatus };
+					set({
+						notes: [...notes.filter(n => n.id !== id), updatedNote],
+						pendingNotes: pendingNotes.filter(n => n.id !== id)
+					});
+				} catch (err) {
+					console.error('Failed to move note to board:', err);
+				}
+			},
+
+			mergeNotes: async (sourceId, targetId) => {
+				const { notes, pendingNotes } = get();
+				if (sourceId === targetId) return;
+
+				const source = notes.find(n => n.id === sourceId) || pendingNotes.find(n => n.id === sourceId);
+				const target = notes.find(n => n.id === targetId) || pendingNotes.find(n => n.id === targetId);
+
+				if (!source || !target) return;
+
+				const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toISOString()})\n${source.content}`;
+				const user_id = useAuthStore.getState().currentUser?.id;
+
+				try {
+					// Update target
+					const { error: updateError } = await supabase
+						.from('sticky_notes')
+						.update({ content: mergedContent, updated_at: new Date().toISOString() })
+						.eq('id', targetId);
+
+					if (updateError) throw updateError;
+
+					// Delete source
+					const { error: deleteError } = await supabase
+						.from('sticky_notes')
+						.delete()
+						.eq('id', sourceId);
+
+					if (deleteError) throw deleteError;
+
+					// Log history for target if needed (optional, depends on design)
+
+					const updatedTarget = { ...target, content: mergedContent };
+
+					set(state => ({
 						notes: state.notes.map(n => n.id === targetId ? updatedTarget : n).filter(n => n.id !== sourceId),
 						pendingNotes: state.pendingNotes.map(n => n.id === targetId ? updatedTarget : n).filter(n => n.id !== sourceId),
 						selectedNoteId: state.selectedNoteId === sourceId ? targetId : state.selectedNoteId
-					};
-				});
+					}));
+				} catch (err) {
+					console.error('Failed to merge notes:', err);
+				}
 			},
-			syncTasks: async () => {
-				const { pendingNotes, notes } = useStore.getState();
-				const authorName = useAuthStore((state) => state.currentUser?.name);
 
+			syncTasks: async () => {
+				const { addPendingNotes, notes, pendingNotes } = get();
 				try {
 					const tasks = await tasksSyncService.fetchTasks();
-
-					// 重複排除: すでに notes または pendingNotes に存在する googleTaskId を除外
 					const existingGoogleTaskIds = new Set([
-						...notes.map(n => n.googleTaskId).filter(Boolean),
-						...pendingNotes.map(n => n.googleTaskId).filter(Boolean)
+						...notes.map(n => n.google_task_id || n.googleTaskId).filter(Boolean),
+						...pendingNotes.map(n => n.google_task_id || n.googleTaskId).filter(Boolean)
 					]);
 
 					const newTasks = tasks.filter(task => !existingGoogleTaskIds.has(task.googleTaskId));
-
 					if (newTasks.length === 0) return;
 
-					const newNotes = newTasks.map(task =>
-						createNote(task.title, task.notes, 'house', 'pending', authorName, task.googleTaskId)
-					);
-
-					set((state) => ({
-						pendingNotes: [...newNotes, ...state.pendingNotes]
-					}));
+					await addPendingNotes(newTasks.map(task => ({
+						title: task.title,
+						content: task.notes,
+						category: 'house',
+						googleTaskId: task.googleTaskId
+					})));
 				} catch (error) {
 					console.error('Failed to sync tasks:', error);
 					throw error;
 				}
 			},
+
 			isAddFormOpen: false,
 			draftContent: '',
 			openAddForm: () => set({ isAddFormOpen: true }),
@@ -326,22 +469,11 @@ export const useStore = create<BoardState>()(
 		}),
 		{
 			name: 'care-board-storage',
-			version: 1, // バージョンを上げる
-			migrate: (persistedState: unknown, version: number) => {
-				if (version === 0) {
-					const state = persistedState as BoardState | null;
-					if (!state) return persistedState as BoardState;
-					// バージョン0（以前の状態）から移行する場合、
-					// pendingNotes が空、または存在しないなら初期データを注入する
-					return {
-						...state,
-						pendingNotes: (state.pendingNotes && state.pendingNotes.length > 0)
-							? state.pendingNotes
-							: INITIAL_PENDING_NOTES
-					};
-				}
-				return persistedState as BoardState;
-			}
+			version: 2,
+			partialize: (state) => ({
+				containerDimensions: state.containerDimensions,
+				// notes and pendingNotes are no longer persisted
+			}),
 		}
 	)
 );

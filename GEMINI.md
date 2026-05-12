@@ -35,7 +35,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] Basic Drag & Drop (dnd-kit) with percentage normalization.
 - [x] **Refactor Data Types:** Align `StickyNote` type with `設計書.md`.
 - [x] **Note Modal:** Markdown rendering and basic edit functionality.
-- [x] **Dynamic Status & History:** Update note status on D&D and log changes.
+- [x] **Dynamic Status & History:** Update note status on D&D and log persistent changes to `note_history`.
 
 ### Phase 2: Enhanced UI & Interactive Features
 - [ ] **Visual Feedback:** Implement "Hover/Tap Preview" for note contents before opening the modal.
@@ -57,7 +57,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **PWA Support:** Add manifest and service worker for mobile home screen installation.
 - [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box (Workspace accounts only).
 - [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.
-- [ ] **Full Data Sync:** Synchronize all notes and board state with Supabase DB.
+- [x] **Full Data Sync (Issue #56, #57):** All notes and change history are now fully synchronized with Supabase DB.
 
 ## 5. Directory Structure
 ```
