@@ -68,11 +68,13 @@ export const useStore = create<BoardState>()(
 					if (error) throw error;
 
 					const allNotes = data as Note[];
-					set({
-						notes: allNotes.filter(n => n.status !== 'pending'),
-						pendingNotes: allNotes.filter(n => n.status === 'pending'),
-						isLoading: false
+					const notes: Note[] = [];
+					const pendingNotes: Note[] = [];
+					allNotes.forEach(n => {
+						if (n.status === 'pending') pendingNotes.push(n);
+						else notes.push(n);
 					});
+					set({ notes, pendingNotes, isLoading: false });
 				} catch (err) {
 					set({
 						error: err instanceof Error ? err.message : '付箋の取得に失敗しました',
@@ -223,6 +225,11 @@ export const useStore = create<BoardState>()(
 			updateNote: async (id, updates) => {
 				try {
 					const dbUpdates = { ...updates } as any;
+					// UI専用フィールドを除去
+					delete dbUpdates.history;
+					delete dbUpdates.authorName;
+					delete dbUpdates.updatedAt;
+
 					// Map UI fields to DB fields if necessary
 					if (updates.googleTaskId) {
 						dbUpdates.google_task_id = updates.googleTaskId;
@@ -273,24 +280,30 @@ export const useStore = create<BoardState>()(
 
 				try {
 					// Update note status
-					const { error: noteError } = await supabase
-						.from('sticky_notes')
-						.update({ status: newStatus, updated_at: new Date().toISOString() })
-						.eq('id', id);
+					// const { error: noteError } = await supabase
+					// 	.from('sticky_notes')
+					// 	.update({ status: newStatus, updated_at: new Date().toISOString() })
+					// 	.eq('id', id);
 
-					if (noteError) throw noteError;
+					// if (noteError) throw noteError;
 
 					// Log history
-					if (user_id) {
-						await supabase
-							.from('note_history')
-							.insert([{
-								note_id: id,
-								from_status: note.status,
-								to_status: newStatus,
-								user_id
-							}]);
-					}
+					// if (user_id) {
+					// 	await supabase
+					// 		.from('note_history')
+					// 		.insert([{
+					// 			note_id: id,
+					// 			from_status: note.status,
+					// 			to_status: newStatus,
+					// 			user_id
+					// 		}]);
+					// }
+					const { data, error } = await supabase.rpc('pending_to_new_status', {
+						note_id: id,
+						new_status: newStatus,
+					});
+
+					if (error) throw error;
 
 					const updatedNote = { ...note, status: newStatus };
 
@@ -325,23 +338,31 @@ export const useStore = create<BoardState>()(
 						updateData.status = newStatus;
 					}
 
-					const { error: noteError } = await supabase
-						.from('sticky_notes')
-						.update(updateData)
-						.eq('id', id);
+					// const { error: noteError } = await supabase
+					// 	.from('sticky_notes')
+					// 	.update(updateData)
+					// 	.eq('id', id);
 
-					if (noteError) throw noteError;
+					// if (noteError) throw noteError;
 
-					if (statusChanged && user_id) {
-						await supabase
-							.from('note_history')
-							.insert([{
-								note_id: id,
-								from_status: note.status,
-								to_status: newStatus,
-								user_id
-							}]);
-					}
+					// if (statusChanged && user_id) {
+					// 	await supabase
+					// 		.from('note_history')
+					// 		.insert([{
+					// 			note_id: id,
+					// 			from_status: note.status,
+					// 			to_status: newStatus,
+					// 			user_id
+					// 		}]);
+					// }
+					const { data, error } = await supabase.rpc('update_note_position_status', {
+						note_id: id,
+						moved_x: x,
+						moved_y: y,
+						new_status: newStatus
+					});
+
+					if (error) throw error;
 
 					const updatedNote = { ...note, x, y, status: newStatus };
 					set({
@@ -408,20 +429,26 @@ export const useStore = create<BoardState>()(
 
 				try {
 					// Update target
-					const { error: updateError } = await supabase
-						.from('sticky_notes')
-						.update({ content: mergedContent, updated_at: new Date().toISOString() })
-						.eq('id', targetId);
+					// const { error: updateError } = await supabase
+					// 	.from('sticky_notes')
+					// 	.update({ content: mergedContent, updated_at: new Date().toISOString() })
+					// 	.eq('id', targetId);
 
-					if (updateError) throw updateError;
+					// if (updateError) throw updateError;
 
 					// Delete source
-					const { error: deleteError } = await supabase
-						.from('sticky_notes')
-						.delete()
-						.eq('id', sourceId);
+					// const { error: deleteError } = await supabase
+					// 	.from('sticky_notes')
+					// 	.delete()
+					// 	.eq('id', sourceId);
 
-					if (deleteError) throw deleteError;
+					// if (deleteError) throw deleteError;
+					const { data, error } = await supabase.rpc('merge_sticky_notes', {
+						source_id: sourceId,
+						target_id: targetId
+					});
+
+					if (error) throw error;
 
 					// Log history for target if needed (optional, depends on design)
 
