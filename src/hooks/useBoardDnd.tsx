@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { MouseSensor, TouchSensor, DragOverlay, useSensors, useSensor } from '@dnd-kit/core';
 import { useDragOnBoard } from "./useDragOnBoard"
 import { StickyNoteView } from '../components/sticky-note/StickyNoteView';
@@ -21,7 +22,7 @@ export const useBoardDnd = () => {
 
   const activeNote = notes.find(n => n.id === activeId) || pendingNotes.find(n => n.id === activeId);
 
-  const activeOverlay = () => {
+  const activeOverlay = useCallback(() => {
     return (
       <DragOverlay dropAnimation={null}>
         {activeId && activeNote ? (
@@ -33,7 +34,7 @@ export const useBoardDnd = () => {
         ) : null}
       </DragOverlay>
     );
-  };
+  }, [activeId, activeNote]);
 
   return {
     sensors,

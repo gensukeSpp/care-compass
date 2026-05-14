@@ -18,7 +18,9 @@ export function NoteQuadHistory({ note, isEditing }: NoteHistoryProps) {
           <ul className="text-xs text-gray-500 space-y-1 max-h-20 overflow-y-auto custom-scrollbar">
             {note.history.map((h, index) => (
               <li key={index} className="flex gap-2">
-                <span className="text-gray-400 shrink-0">{new Date(h.timestamp).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                {h.timestamp &&
+                  <span className="text-gray-400 shrink-0">{new Date(h.timestamp).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                }
                 <span className="font-medium">{h.from}</span>
                 <span className="text-gray-300">→</span>
                 <span className="font-medium text-blue-600">{h.to}</span>

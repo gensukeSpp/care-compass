@@ -20,8 +20,6 @@ export function NoteModalTop() {
     medical: '💊 医療・健康',
     social: '🧑‍🤝‍🧑 社会・交流',
   };
-  console.log(isEditing);
-  // console.log(isPending);
 
   return (
     <NoteModalWrapper>
