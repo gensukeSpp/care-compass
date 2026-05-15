@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AuthCallback } from './pages/AuthCallback';
 import { BoardPage } from './components/board/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { JoinPage } from './pages/JoinPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { useAuthGuard } from './hooks/useAuthGuard';
 
@@ -18,6 +19,7 @@ function App() {
       <Route path="/" element={<MainLayout />}>
         <Route index element={<BoardPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/join" element={<JoinPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
       </Route>
     </Routes>

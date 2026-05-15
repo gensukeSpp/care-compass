@@ -1,4 +1,3 @@
-import { type Note } from "../../types/index";
 
 interface ModalWrapperProps {
   // onClose: () => void;

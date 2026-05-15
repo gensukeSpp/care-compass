@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { useStore } from '../store/useStore';
-import type { Category, Note } from '../types';
+import type { Category } from '../types';
 
 export const useNoteModalState = () => {
   const { notes, pendingNotes, selectNote } = useStore();
@@ -24,11 +24,13 @@ export const useNoteModalState = () => {
   // noteが変わった時に編集stateを初期化
   useEffect(() => {
     if (note) {
-      setEditTitle(note.title);
-      setEditContent(note.content);
-      setEditCategory(note.category);
+      Promise.resolve().then(() => {
+        setEditTitle(note.title);
+        setEditContent(note.content);
+        setEditCategory(note.category);
+      });
     }
-  }, [note?.id]);
+  }, [note]);
 
   return {
     note,

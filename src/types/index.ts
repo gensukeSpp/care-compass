@@ -49,5 +49,6 @@ export interface Profile {
 
 export interface Member {
   profile_id: string;
-  profiles: Profile[];
+  role: 'owner' | 'member';
+  profiles: Profile | Profile[];
 }

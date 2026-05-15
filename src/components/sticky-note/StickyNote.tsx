@@ -34,7 +34,7 @@ export const StickyNote = ({ id, title, x, y, category }: { id: string, title: s
 		touchAction: 'none' as const,
 	};
 
-	const handlePointerUp = (_e: React.PointerEvent) => {
+	const handlePointerUp = () => {
 		// ドラッグとクリックを判別するため、微細な移動ならクリックとみなす
 		if (!transform || (Math.abs(transform.x) < 5 && Math.abs(transform.y) < 5)) {
 			selectNote(id);
@@ -50,7 +50,7 @@ export const StickyNote = ({ id, title, x, y, category }: { id: string, title: s
 			style={style}
 			{...listeners}
 			{...attributes}
-			onPointerUp={(e) => handlePointerUp(e)}
+			onPointerUp={() => handlePointerUp()}
 			className={`cursor-grab active:cursor-grabbing`}
 		>
 			<StickyNoteView 

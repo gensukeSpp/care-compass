@@ -1,10 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, UserPlus } from 'lucide-react';
 import { useAuthStore } from "../../store/useAuthStore";
 import { Header } from "./Header";
 import { useWebShareTarget } from "../../hooks/useWebShareTarget";
+import { InviteModal } from "../board/InviteModal";
 
+/**
+ * アプリケーションのメインレイアウトコンポーネントです。
+ * 共通ヘッダー、ナビゲーション、プロファイル選択状態の管理、および招待モーダルの制御を行います。
+ * @return :React.FC メインレイアウトコンポーネント
+ */
 export function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,13 +18,17 @@ export function MainLayout() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const currentProfileId = useAuthStore((state) => state.currentProfileId);
   const currentProfiles = useAuthStore((state) => state.currentProfiles);
+  const currentRoles = useAuthStore((state) => state.currentRoles);
   const deselectProfile = useAuthStore((state) => state.deselectProfile);
 
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
   const currentProfile = currentProfiles.find((p) => p.id === currentProfileId);
+  const isOwner = currentProfileId ? currentRoles[currentProfileId] === 'owner' : false;
 
   // プロファイル未選択時のダッシュボード誘導
   useEffect(() => {
-    if (isLoggedIn && !currentProfileId && location.pathname !== '/dashboard' && location.pathname !== '/auth/callback') {
+    if (isLoggedIn && !currentProfileId && location.pathname !== '/dashboard' && location.pathname !== '/auth/callback' && location.pathname !== '/join') {
       navigate('/dashboard');
     }
   }, [isLoggedIn, currentProfileId, location.pathname, navigate]);
@@ -44,17 +54,29 @@ export function MainLayout() {
           </Link>
 
           {isLoggedIn && (
-            <Link
-              to="/dashboard"
-              onClick={() => deselectProfile()}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${location.pathname === '/dashboard'
-                ? 'bg-indigo-50 text-indigo-600 font-medium'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-sm">ボード一覧</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/dashboard"
+                onClick={() => deselectProfile()}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${location.pathname === '/dashboard'
+                  ? 'bg-indigo-50 text-indigo-600 font-medium'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="text-sm">ボード一覧</span>
+              </Link>
+
+              {currentProfile && isOwner && (
+                <button
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="text-sm">招待</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -65,6 +87,16 @@ export function MainLayout() {
       <main className="flex-1 relative overflow-hidden">
         <Outlet />
       </main>
+
+      {/* 招待モーダル */}
+      {currentProfile && (
+        <InviteModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          profileId={currentProfile.id}
+          profileName={currentProfile.name}
+        />
+      )}
     </div>
   );
 }

@@ -51,6 +51,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Markdown Batch Import (2):** Keyword-based automatic classification (Category/Status).
 - [ ] **Markdown Batch Import (3):** AI-enhanced context analysis & summarization.
 - [x] **Google Tasks to Pending Box (Issue #29):** Support for selecting task lists and tasks to import into Pending Box.
+- [x] **Family Invitation (Issue #59):** Implemented invitation via link and QR code, including `InviteModal` and `JoinPage`.
 - [x] **Supabase Auth Migration:** Transitioned from custom Worker auth to official Supabase Auth SDK (Google OAuth). Fixed UUID type mismatches and enabled proper RLS using `auth.uid()`.
 - [x] **Owner Registration during Board Creation (Issue #31):** Successfully implemented `profiles` and `board_members` registration when creating a new board.
 - [ ] **Dashboard & Board Selection (Issue #36):** Implement a dedicated landing page to list accessible boards, allow switching, and trigger new board creation.
