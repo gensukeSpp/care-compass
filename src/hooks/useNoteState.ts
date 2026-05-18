@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { useStore } from '../store/useStore';
-import type { Category, Note } from '../types';
+import type { Category } from '../types';
 
 export const useNoteModalState = () => {
   const { notes, pendingNotes, selectNote } = useStore();
@@ -28,7 +28,7 @@ export const useNoteModalState = () => {
       setEditContent(note.content);
       setEditCategory(note.category);
     }
-  }, [note?.id]);
+  }, [note]);
 
   return {
     note,

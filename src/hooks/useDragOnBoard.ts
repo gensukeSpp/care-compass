@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import type { ClientRect, DragEndEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useStore } from "../store/useStore";
-import { pixelsToPercentage, getQuadrantFromPosition, convertToBoardPercentages, getActiveNoteInfo } from '../utils/positionUtils';
+import { getQuadrantFromPosition, convertToBoardPercentages, getActiveNoteInfo } from '../utils/positionUtils';
 import type { Note } from "../types";
 
 export const useDragOnBoard = () => {
@@ -38,7 +38,7 @@ export const useDragOnBoard = () => {
   }, [notes]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active } = event;
     setActiveId(null);
 
     if (containerDimensions.width === 0 || containerDimensions.height === 0) return;
@@ -79,7 +79,7 @@ export const useDragOnBoard = () => {
         updateNotePositionAndStatus(String(active.id), pos.x, pos.y);
       }
     }
-  }, [containerDimensions, notes, pendingNotes, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
+  }, [containerDimensions, notes, calculatePosition, findMergeTarget, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
 
   return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, boardRef };
 }

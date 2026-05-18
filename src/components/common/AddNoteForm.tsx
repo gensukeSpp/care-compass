@@ -19,7 +19,7 @@ export const AddNoteForm = () => {
       setIsOpen(true);
       closeAddForm();
     }
-  }, [isAddFormOpen, draftContent]);
+  }, [isAddFormOpen, draftContent, closeAddForm]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

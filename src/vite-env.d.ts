@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ViteTypeOptions {
   // この行を追加することで ImportMetaEnv の型を厳密にし、不明なキーを許可しないように
   // できます。

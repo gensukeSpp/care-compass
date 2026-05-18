@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { v4 as uuidv4 } from 'uuid';
 
 import type { Category, QuadrantId, Note, History } from '../types/index';
 import { getQuadrantFromPosition } from '../utils/positionUtils';
@@ -93,8 +92,13 @@ export const useStore = create<BoardState>()(
 
 					if (error) throw error;
 
-					const history = (data as any[]).map(h => ({
-						...h,
+					const history = (data as { id: string; from_status: QuadrantId; to_status: QuadrantId; created_at: string; user_id: string }[]).map(h => ({
+						id: h.id,
+						note_id: noteId,
+						user_id: h.user_id,
+						from_status: h.from_status,
+						to_status: h.to_status,
+						created_at: h.created_at,
 						from: h.from_status,
 						to: h.to_status,
 						timestamp: h.created_at
@@ -224,7 +228,7 @@ export const useStore = create<BoardState>()(
 
 			updateNote: async (id, updates) => {
 				try {
-					const dbUpdates = { ...updates } as any;
+					const dbUpdates: Record<string, unknown> = { ...updates };
 					// UI専用フィールドを除去
 					delete dbUpdates.history;
 					delete dbUpdates.authorName;
@@ -276,29 +280,8 @@ export const useStore = create<BoardState>()(
 				const note = notes.find(n => n.id === id) || pendingNotes.find(n => n.id === id);
 				if (!note || note.status === newStatus) return;
 
-				const user_id = useAuthStore.getState().currentUser?.id;
-
 				try {
-					// Update note status
-					// const { error: noteError } = await supabase
-					// 	.from('sticky_notes')
-					// 	.update({ status: newStatus, updated_at: new Date().toISOString() })
-					// 	.eq('id', id);
-
-					// if (noteError) throw noteError;
-
-					// Log history
-					// if (user_id) {
-					// 	await supabase
-					// 		.from('note_history')
-					// 		.insert([{
-					// 			note_id: id,
-					// 			from_status: note.status,
-					// 			to_status: newStatus,
-					// 			user_id
-					// 		}]);
-					// }
-					const { data, error } = await supabase.rpc('pending_to_new_status', {
+					const { error } = await supabase.rpc('pending_to_new_status', {
 						note_id: id,
 						new_status: newStatus,
 					});
@@ -330,32 +313,14 @@ export const useStore = create<BoardState>()(
 
 				const newStatus = getQuadrantFromPosition(x, y);
 				const statusChanged = note.status !== newStatus;
-				const user_id = useAuthStore.getState().currentUser?.id;
 
 				try {
-					const updateData: any = { x, y, updated_at: new Date().toISOString() };
+					const updateData: Record<string, unknown> = { x, y, updated_at: new Date().toISOString() };
 					if (statusChanged) {
 						updateData.status = newStatus;
 					}
 
-					// const { error: noteError } = await supabase
-					// 	.from('sticky_notes')
-					// 	.update(updateData)
-					// 	.eq('id', id);
-
-					// if (noteError) throw noteError;
-
-					// if (statusChanged && user_id) {
-					// 	await supabase
-					// 		.from('note_history')
-					// 		.insert([{
-					// 			note_id: id,
-					// 			from_status: note.status,
-					// 			to_status: newStatus,
-					// 			user_id
-					// 		}]);
-					// }
-					const { data, error } = await supabase.rpc('update_note_position_status', {
+					const { error } = await supabase.rpc('update_note_position_status', {
 						note_id: id,
 						moved_x: x,
 						moved_y: y,
@@ -425,7 +390,6 @@ export const useStore = create<BoardState>()(
 				if (!source || !target) return;
 
 				const mergedContent = `${target.content}\n\n---\n**Merged from: ${source.title}** (${new Date().toISOString()})\n${source.content}`;
-				const user_id = useAuthStore.getState().currentUser?.id;
 
 				try {
 					// Update target
@@ -443,7 +407,7 @@ export const useStore = create<BoardState>()(
 					// 	.eq('id', sourceId);
 
 					// if (deleteError) throw deleteError;
-					const { data, error } = await supabase.rpc('merge_sticky_notes', {
+					const { error } = await supabase.rpc('merge_sticky_notes', {
 						source_id: sourceId,
 						target_id: targetId
 					});

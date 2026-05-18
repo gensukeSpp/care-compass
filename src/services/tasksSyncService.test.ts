@@ -13,10 +13,10 @@ describe('tasksSyncService', () => {
         { id: 'list-2', title: 'List 2', updated: '2024-01-02T00:00:00Z' },
       ];
 
-      (fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({ taskLists: mockLists }),
-      });
+      } as Response);
 
       const lists = await tasksSyncService.fetchTaskLists();
 
@@ -25,10 +25,10 @@ describe('tasksSyncService', () => {
     });
 
     it('should throw error when fetch fails', async () => {
-      (fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: false,
         json: async () => ({ error: 'Unauthorized' }),
-      });
+      } as Response);
 
       await expect(tasksSyncService.fetchTaskLists()).rejects.toThrow('Unauthorized');
     });
@@ -41,10 +41,10 @@ describe('tasksSyncService', () => {
       ];
       const listId = 'test-list-id';
 
-      (fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({ tasks: mockTasks }),
-      });
+      } as Response);
 
       const tasks = await tasksSyncService.fetchTasksFromList(listId);
 
@@ -56,10 +56,10 @@ describe('tasksSyncService', () => {
     });
 
     it('should throw error when fetch fails', async () => {
-      (fetch as any).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: false,
         json: async () => ({ error: 'Failed' }),
-      });
+      } as Response);
 
       await expect(tasksSyncService.fetchTasksFromList('any')).rejects.toThrow('Failed');
     });

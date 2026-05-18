@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
-import type { Member, Profile } from '../types/index';
+import type { Profile, Member } from '../types/index';
 
 export interface User {
   id: string;
@@ -19,6 +19,7 @@ interface AuthState {
   // プロファイル関連の状態
   currentProfileId: string | null;
   currentProfiles: Profile[];
+  currentRoles: Record<string, 'owner' | 'member'>; // profileId -> role
 
   // アクション
   /**
@@ -68,6 +69,14 @@ interface AuthState {
    * @return :Promise<void>
    */
   createProfile: (name: string) => Promise<void>;
+
+  /**
+   * 招待を受諾し、ボードメンバーとして参加します。
+   * @params
+   *  token :string - 招待トークン
+   * @return :Promise<string> 参加したプロファイルID
+   */
+  acceptInvitation: (token: string) => Promise<string>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -79,6 +88,7 @@ export const useAuthStore = create<AuthState>()(
       error: null,
       currentProfileId: null,
       currentProfiles: [],
+      currentRoles: {},
 
       login: async () => {
         set({ isLoading: true, error: null });
@@ -100,7 +110,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         set({ isLoading: true });
         await supabase.auth.signOut();
-        set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null, isLoading: false });
+        set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null, currentRoles: {}, isLoading: false });
         // ローカルストレージをクリアするためにリロードを推奨（オプション）
         window.location.href = '/';
       },
@@ -121,25 +131,34 @@ export const useAuthStore = create<AuthState>()(
             };
 
             // Supabase からプロファイル一覧を取得
-            const { data: members, error: membersError } = await supabase
+            const { data: membersData, error: membersError } = await supabase
               .from('board_members')
-              .select('profile_id, profiles(*)')
+              .select('profile_id, role, profiles(*)')
               .eq('user_id', user.id);
 
             if (membersError) throw membersError;
 
-            const profiles = (members as Member[] || [])
+            const members = membersData as unknown as Member[];
+            const profiles = members
               .map((m) => Array.isArray(m.profiles) ? m.profiles[0] : m.profiles)
               .filter((p): p is Profile => !!p);
+
+            const roles: Record<string, 'owner' | 'member'> = {};
+            members.forEach((m) => {
+              if (m.profile_id) {
+                roles[m.profile_id] = m.role;
+              }
+            });
 
             // ユーザー情報とプロファイル一覧を同時に設定
             set({
               currentUser: user,
               isLoggedIn: true,
-              currentProfiles: profiles
+              currentProfiles: profiles,
+              currentRoles: roles
             });
           } else {
-            set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null });
+            set({ currentUser: null, isLoggedIn: false, currentProfiles: [], currentProfileId: null, currentRoles: {} });
           }
         } catch (err) {
           console.error('Auth check error:', err);
@@ -147,7 +166,8 @@ export const useAuthStore = create<AuthState>()(
             error: err instanceof Error ? err.message : '認証チェックに失敗しました',
             isLoggedIn: false,
             currentUser: null,
-            currentProfiles: []
+            currentProfiles: [],
+            currentRoles: {}
           });
         } finally {
           set({ isLoading: false });
@@ -174,14 +194,37 @@ export const useAuthStore = create<AuthState>()(
           if (error) throw error;
 
           const updatedProfiles = [...get().currentProfiles, profile];
+          const updatedRoles = { ...get().currentRoles, [profile.id]: 'owner' as const };
           set({
             currentProfiles: updatedProfiles,
+            currentRoles: updatedRoles,
             currentProfileId: profile.id,
             isLoading: false
           });
         } catch (err) {
           set({
             error: err instanceof Error ? err.message : 'プロファイルの作成に失敗しました',
+            isLoading: false
+          });
+          throw err;
+        }
+      },
+
+      acceptInvitation: async (token) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data: profileId, error } = await supabase.rpc('accept_invitation', { p_token: token });
+
+          if (error) throw error;
+
+          // 参加に成功したので認証状態（プロファイル一覧）を更新
+          await get().checkAuth();
+
+          set({ isLoading: false });
+          return profileId;
+        } catch (err) {
+          set({
+            error: err instanceof Error ? err.message : '招待の受諾に失敗しました',
             isLoading: false
           });
           throw err;
@@ -194,7 +237,8 @@ export const useAuthStore = create<AuthState>()(
         currentUser: state.currentUser,
         isLoggedIn: state.isLoggedIn,
         currentProfileId: state.currentProfileId,
-        currentProfiles: state.currentProfiles
+        currentProfiles: state.currentProfiles,
+        currentRoles: state.currentRoles
       }),
     }
   )
