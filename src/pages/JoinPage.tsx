@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, use } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
@@ -11,12 +11,12 @@ export const JoinPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
-  
+
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const login = useAuthStore((state) => state.login);
   const acceptInvitation = useAuthStore((state) => state.acceptInvitation);
   const selectProfile = useAuthStore((state) => state.selectProfile);
-  
+
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -45,11 +45,35 @@ export const JoinPage: React.FC = () => {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : '招待の受諾に失敗しました。リンクが無効か、有効期限が切れている可能性があります。');
     }
+    // }, [token]);
   }, [token, acceptInvitation, selectProfile, navigate]);
+
+  // review #59 ↑
+  // useEffect(() => {
+  //   const f = async () => {
+  //     try {
+  //       if (!token) return;
+  //       const profileId = await acceptInvitation(token);
+  //       setStatus('success');
+  //       // 3秒後に自動遷移
+  //       const timer = setTimeout(() => {
+  //         selectProfile(profileId);
+  //         navigate('/');
+  //       }, 3000);
+  //
+  //       return () => clearTimeout(timer);
+  //     } catch (err) {
+  //       console.error('Failed to accept invitation:', err);
+  //       setStatus('error');
+  //       setErrorMessage(err instanceof Error ? err.message : '招待の受諾に失敗しました。リンクが無効か、有効期限が切れている可能性があります。');
+  //     }
+  //   };
+  //   f();
+  // }, [token, acceptInvitation, selectProfile, navigate]);
 
   useEffect(() => {
     if (isLoggedIn && token && status === 'idle') {
-      Promise.resolve().then(() => handleJoin());
+      handleJoin();
     }
   }, [isLoggedIn, token, status, handleJoin]);
 

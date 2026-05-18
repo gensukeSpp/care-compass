@@ -15,11 +15,9 @@ export const AddNoteForm = () => {
   // draftContent（ドロップされた内容）があればセットする
   useEffect(() => {
     if (isAddFormOpen) {
-      Promise.resolve().then(() => {
-        setContent(draftContent || '');
-        setIsOpen(true);
-        closeAddForm();
-      });
+      setContent(draftContent || '');
+      setIsOpen(true);
+      closeAddForm();
     }
   }, [isAddFormOpen, draftContent, closeAddForm]);
 

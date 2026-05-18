@@ -24,11 +24,9 @@ export const useNoteModalState = () => {
   // noteが変わった時に編集stateを初期化
   useEffect(() => {
     if (note) {
-      Promise.resolve().then(() => {
-        setEditTitle(note.title);
-        setEditContent(note.content);
-        setEditCategory(note.category);
-      });
+      setEditTitle(note.title);
+      setEditContent(note.content);
+      setEditCategory(note.category);
     }
   }, [note]);
 

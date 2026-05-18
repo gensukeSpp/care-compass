@@ -92,8 +92,8 @@ export const useStore = create<BoardState>()(
 
 					if (error) throw error;
 
-					const history = (data as { from_status: QuadrantId; to_status: QuadrantId; created_at: string; user_id: string }[]).map(h => ({
-						id: '', // dummy
+					const history = (data as { id: string; from_status: QuadrantId; to_status: QuadrantId; created_at: string; user_id: string }[]).map(h => ({
+						id: h.id,
 						note_id: noteId,
 						user_id: h.user_id,
 						from_status: h.from_status,

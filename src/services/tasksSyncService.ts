@@ -18,7 +18,6 @@ export interface GoogleTaskList {
 import { getApiBaseUrl } from '../utils/api';
 
 const API_BASE = getApiBaseUrl();
-console.log(`API_BASE: ${API_BASE}`);
 
 export const tasksSyncService = {
   /**
