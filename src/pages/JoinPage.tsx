@@ -49,6 +49,7 @@ export const JoinPage: React.FC = () => {
   }, [token, acceptInvitation, selectProfile, navigate]);
 
   // review #59 ↑
+  // 【重要】リリース前、まだ動作確認できず、以下の対応を一時見送り
   // useEffect(() => {
   //   const f = async () => {
   //     try {

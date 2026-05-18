@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, X, Share2, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useInvitation } from '../../hooks/useInvitation';
+import { useShare } from '../../hooks/useShare';
 
 interface InviteModalProps {
   isOpen: boolean;
@@ -18,85 +18,21 @@ interface InviteModalProps {
  * @return :React.FC 招待モーダルコンポーネント
  */
 export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, profileId, profileName }) => {
-  const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { invitationUrl, generateInvite, isLoading, error } = useInvitation(profileId);
+  const { copied, copyToClipboard, share } = useShare();
 
-  /**
-   * Supabaseで招待トークンを発行し、招待URLを生成します。
-   * @return :Promise<void> 戻り値はありません
-   */
-  const generateInvite = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const user = useAuthStore.getState().currentUser;
-      if (!user) {
-        throw new Error('招待リンクを発行するにはログインが必要です。');
-      }
-
-      // 24時間後に期限切れ
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      
-      const { data, error: insertError } = await supabase
-        .from('invitations')
-        .insert({
-          profile_id: profileId,
-          expires_at: expiresAt,
-          created_by: user.id,
-        })
-        .select('token')
-        .single();
-
-      if (insertError) throw insertError;
-
-      const url = `${window.location.origin}/join?token=${data.token}`;
-      setInvitationUrl(url);
-    } catch (err) {
-      console.error('Failed to generate invite:', err);
-      setError('招待リンクの生成に失敗しました。');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * 招待URLをクリップボードにコピーします。
-   * @return :Promise<void> 戻り値はありません
-   */
-  const copyToClipboard = async () => {
-    if (!invitationUrl) return;
-    try {
-      await navigator.clipboard.writeText(invitationUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  /**
-   * OS標準の共有機能（Web Share API）を使用して招待リンクを共有します。
-   * 未対応の場合はクリップボードへのコピーを実行します。
-   * @return :Promise<void> 戻り値はありません
-   */
   const handleShare = async () => {
     if (!invitationUrl) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Care Compass - ${profileName}さんのボードに招待`,
-          text: `${profileName}さんのケア・コンパスボードに参加するための招待リンクです。`,
-          url: invitationUrl,
-        });
-      } catch (err) {
-        console.error('Error sharing:', err);
-      }
-    } else {
-      copyToClipboard();
+    try {
+      await share({
+        title: `Care Compass - ${profileName}さんのボードに招待`,
+        text: `${profileName}さんのケア・コンパスボードに参加するための招待リンクです。`,
+        url: invitationUrl,
+      });
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
-  };
+  }
 
   if (!isOpen) return null;
 
@@ -154,12 +90,11 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, profi
                     className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none"
                   />
                   <button
-                    onClick={copyToClipboard}
-                    className={`p-2 rounded-lg transition-colors border ${
-                      copied 
-                        ? 'bg-green-50 border-green-200 text-green-600' 
-                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
+                    onClick={() => copyToClipboard(invitationUrl)}
+                    className={`p-2 rounded-lg transition-colors border ${copied
+                      ? 'bg-green-50 border-green-200 text-green-600'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
                   >
                     {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                   </button>
