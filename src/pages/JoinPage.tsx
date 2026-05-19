@@ -48,7 +48,8 @@ export const JoinPage: React.FC = () => {
     // }, [token]);
   }, [token, acceptInvitation, selectProfile, navigate]);
 
-  // review #59 ↑
+  // TODO: 一度リリースして動作確認したいので、以下の対応を一時見送り
+  // PR URL: https://github.com/gensukeSpp/care-compass/pull/60
   // useEffect(() => {
   //   const f = async () => {
   //     try {
