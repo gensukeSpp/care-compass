@@ -22,7 +22,7 @@ export const useShare = () => {
     if (navigator.share) {
       await navigator.share(data);
     } else {
-      await copyToClipboard(data.url || '');
+      if (data.url) await copyToClipboard(data.url);
     }
   };
 

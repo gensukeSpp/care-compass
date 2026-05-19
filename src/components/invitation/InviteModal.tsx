@@ -90,7 +90,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ isOpen, onClose, profi
                     className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none"
                   />
                   <button
-                    onClick={() => copyToClipboard(invitationUrl)}
+                    onClick={() => invitationUrl && copyToClipboard(invitationUrl)}
                     className={`p-2 rounded-lg transition-colors border ${copied
                       ? 'bg-green-50 border-green-200 text-green-600'
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'

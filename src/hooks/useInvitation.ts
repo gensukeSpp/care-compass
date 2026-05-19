@@ -40,6 +40,7 @@ export const useInvitation = (profileId: string) => {
       const url = `${window.location.origin}/join?token=${data.token}`;
       setInvitationUrl(url);
     } catch (err) {
+      console.error('Failed to generate invite:', err);
       setError('招待リンクの生成に失敗しました。');
     } finally {
       setIsLoading(false);
