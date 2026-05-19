@@ -49,7 +49,7 @@ export const PendingDrawer = () => {
             <h2 className="font-bold text-lg text-gray-700 flex items-center gap-2">
               <span>📥</span> 保留ボックス
             </h2>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsTasksModalOpen(true)}
                 className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
@@ -61,7 +61,7 @@ export const PendingDrawer = () => {
               <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                 {pendingNotes.length}
               </span>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
