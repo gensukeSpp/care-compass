@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/useAuthStore';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 import useInvitationJoin from '../hooks/useInvitationJoin';
 
 /**
@@ -48,7 +48,7 @@ const JoinProcessingView: React.FC = () => (
   </div>
 );
 
-const JoinSuccessView: React.FC<{ profileId: string | null; onImmediate: () => void }> = ({ profileId, onImmediate }) => (
+const JoinSuccessView: React.FC<{ onImmediate: () => void }> = ({ onImmediate }) => (
   <div className="py-6">
     <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6 animate-in bounce-in duration-500" />
     <h2 className="text-2xl font-bold text-gray-800 mb-4">参加が完了しました！</h2>
@@ -111,7 +111,7 @@ export const JoinPage: React.FC = () => {
       <div className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 max-w-md w-full text-center animate-in fade-in zoom-in duration-300">
         {status === 'idle' && !isLoggedIn && <JoinLoginView onLogin={() => login()} />}
         {status === 'processing' && <JoinProcessingView />}
-        {status === 'success' && <JoinSuccessView profileId={profileId} onImmediate={() => { if (profileId) selectProfile(profileId); navigate('/'); }} />}
+        {status === 'success' && <JoinSuccessView onImmediate={() => { if (profileId) selectProfile(profileId); navigate('/'); }} />}
         {status === 'error' && <JoinErrorView message={errorMessage} onBack={() => navigate('/dashboard')} />}
       </div>
     </div>

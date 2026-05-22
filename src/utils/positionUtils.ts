@@ -73,14 +73,9 @@ export const convertToBoardPercentages = (rect: ClientRect, targetRect: DOMRect)
   const xPct = pixelsToPercentage(clampedX, targetRect.width);
   const yPct = pixelsToPercentage(clampedY, targetRect.height);
 
-  console.log(
-    `Note center (viewport): (${noteCenterX}, ${noteCenterY}), ` +
-    `Board rect: left=${targetRect.left}, top=${targetRect.top}, width=${targetRect.width}, height=${targetRect.height}, ` +
-    `Local: (${localX}, ${localY}), Clamped: (${clampedX}, ${clampedY}), Percent: (${xPct}%, ${yPct}%)`
-  );
-
   return { x: xPct, y: yPct }
 }
+
 export const getActiveNoteInfo = (active: Active, notes: Note[]) => {
   // データからタイプを判別
   const activeData = active.data.current;

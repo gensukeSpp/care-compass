@@ -18,7 +18,7 @@ export function MainLayout() {
   useWebShareTarget();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-svh flex flex-col">
       <Header currentProfile={currentProfile} currentUser={currentUser} isLoggedIn={isLoggedIn} isOwner={isOwner} setIsInviteModalOpen={setIsInviteModalOpen} />
 
       {/* メインコンテンツエリア */}

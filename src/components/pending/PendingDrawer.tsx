@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ListChecks } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { PendingNoteItem } from './PendingNoteItem';
 import { useFileImport } from '../../hooks/useDropMdFile';

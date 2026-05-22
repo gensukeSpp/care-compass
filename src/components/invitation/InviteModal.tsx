@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, X, Share2, Loader2 } from 'lucide-react';
 import { useInvitation } from '../../hooks/useInvitation';
