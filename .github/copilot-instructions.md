@@ -69,7 +69,9 @@ Key docs: docs/*.md (markdown import, Google Keep integration, percentage-based 
 ---
 
 ## AI / assistant configs found
-- No existing Copilot/Jules/Claude/other assistant rules files detected in repo root. If adding automated assistant rules, place them under `.github/` or root and reference in this file.
+- This repository includes Copilot instructions at `.github/copilot-instructions.md` (this file).
+- Environment CLIs available: git, curl, and gh. The Copilot CLI (used by this assistant) is available in the environment; use `fetch_copilot_cli_documentation` to retrieve authoritative Copilot CLI docs when needed.
+- If adding new automated assistant rules or configs, place them under `.github/` and reference them from this file.
 
 ---
 
