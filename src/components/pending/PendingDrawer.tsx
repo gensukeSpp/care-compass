@@ -48,6 +48,7 @@ export const PendingDrawer = () => {
             <h2 className="font-bold text-lg text-gray-700 flex items-center gap-2">
               <span>📥</span> 保留ボックス
             </h2>
+            {/*【重要】Google Tasks は使わない方向 */}
             {/* <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsTasksModalOpen(true)}

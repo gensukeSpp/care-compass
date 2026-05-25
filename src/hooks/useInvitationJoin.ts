@@ -30,6 +30,7 @@ export const useInvitationJoin = (
       setStatus('success');
 
       if (opts?.onAutoNavigate) {
+        if (timerRef.current) window.clearTimeout(timerRef.current);
         timerRef.current = window.setTimeout(() => {
           opts.onAutoNavigate?.(id);
         }, delay) as unknown as number;
@@ -37,9 +38,9 @@ export const useInvitationJoin = (
     } catch (err) {
       console.error('useInvitationJoin: acceptInvitation failed', err);
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : String(err) || '招待の受諾に失敗しました。');
+      setErrorMessage(err instanceof Error ? err.message : (err as any)?.message || String(err) || '招待の受諾に失敗しました。');
     }
-  }, [token, acceptInvitation, opts, delay]);
+  }, [token, acceptInvitation, opts?.onAutoNavigate, delay]);
 
   const cancelAutoNavigate = useCallback(() => {
     if (timerRef.current) {

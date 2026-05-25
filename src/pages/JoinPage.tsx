@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -89,10 +89,10 @@ export const JoinPage: React.FC = () => {
   const login = useAuthStore((state) => state.login);
   const selectProfile = useAuthStore((state) => state.selectProfile);
 
-  const onAutoNavigate = (id: string) => {
+  const onAutoNavigate = useCallback((id: string) => {
     selectProfile(id);
     navigate('/');
-  };
+  }, [selectProfile, navigate]);
 
   const { status, errorMessage, profileId, join } = useInvitationJoin(token, { onAutoNavigate });
 

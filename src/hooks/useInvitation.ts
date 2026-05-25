@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -14,7 +14,7 @@ export const useInvitation = (profileId: string) => {
    * Supabaseで招待トークンを発行し、招待URLを生成します。
    * @return :Promise<void> 戻り値はありません
    */
-  const generateInvite = async () => {
+  const generateInvite = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -45,7 +45,7 @@ export const useInvitation = (profileId: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [profileId, user]);
 
   return { invitationUrl, isLoading, error, generateInvite };
 };
