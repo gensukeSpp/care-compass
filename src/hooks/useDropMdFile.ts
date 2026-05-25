@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import type { Category } from '../types';
 import { readMdFile } from '../utils/readMdFile';
@@ -9,7 +10,7 @@ import { splitMdByHeader } from '../utils/splitMdByHeader';
 export function useFileImport() {
   const { addPendingNotes } = useStore();
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
 
@@ -47,7 +48,7 @@ export function useFileImport() {
     if (allNewNotes.length > 0) {
       addPendingNotes(allNewNotes);
     }
-  };
+  }, [addPendingNotes]);
 
   return { handleDrop };
 }

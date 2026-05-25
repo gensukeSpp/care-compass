@@ -1,6 +1,5 @@
 import { UserPlus } from "lucide-react";
 import { type Profile } from "../../types/index";
-import type React from "react";
 
 interface InviteActionProps {
   currentProfile: Profile | null;

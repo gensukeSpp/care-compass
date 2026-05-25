@@ -11,7 +11,7 @@ export function Board() {
     <div
       onDragOver={(e) => e.preventDefault()} // ドロップを許可するために必要
       onDrop={handleDrop}
-      className="four-quadrant-board h-screen w-screen relative overflow-hidden">
+      className="four-quadrant-board h-full w-full relative">
       <BoardBackground type="4-quadrant" /> {/* グリッドを抽象化 */}
       {notes.map(note => <StickyNote key={note.id} {...note} />)}
     </div>

@@ -5,7 +5,7 @@ import { getQuadrantFromPosition, convertToBoardPercentages, getActiveNoteInfo }
 import type { Note } from "../types";
 
 export const useDragOnBoard = () => {
-  const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, mergeNotes, containerDimensions } = useStore();
+  const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, mergeNotes } = useStore();
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -40,8 +40,6 @@ export const useDragOnBoard = () => {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active } = event;
     setActiveId(null);
-
-    if (containerDimensions.width === 0 || containerDimensions.height === 0) return;
 
     // ドロップ位置（絶対座標）を取得（ノート自体の rect）
     const rect = active.rect.current.translated;
@@ -79,7 +77,7 @@ export const useDragOnBoard = () => {
         updateNotePositionAndStatus(String(active.id), pos.x, pos.y);
       }
     }
-  }, [containerDimensions, notes, calculatePosition, findMergeTarget, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
+  }, [notes, calculatePosition, findMergeTarget, mergeNotes, moveToBoard, updateNotePositionAndStatus]);
 
   return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, boardRef };
 }
