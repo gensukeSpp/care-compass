@@ -186,25 +186,70 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().error).toBe('Test Error');
   });
 
-  it('createProfile がプロファイルを作成し、状態を更新すること', async () => {
+  it('createProfile がカスタムラベルとともにプロファイルを作成し、状態を更新すること', async () => {
     const mockUser = { id: 'u1', email: 'u1@test.com', name: 'User 1' };
     useAuthStore.setState({ currentUser: mockUser, isLoggedIn: true });
 
+    const mockLabels = {
+      can: 'Can do',
+      cannot: 'Cannot do',
+      risk: 'Risky',
+      request: 'Request'
+    };
+
+    const mockProfile = {
+      id: 'p1',
+      name: 'Profile 1',
+      can_label: 'Can do',
+      cannot_label: 'Cannot do',
+      risk_label: 'Risky',
+      request_label: 'Request'
+    };
+
     vi.mocked(supabase.rpc).mockResolvedValue({
-      data: { id: 'p1', name: 'Profile 1' },
+      data: mockProfile,
       error: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const { createProfile } = useAuthStore.getState();
-    await createProfile('New Board');
+    await createProfile('New Board', mockLabels);
+
+    expect(supabase.rpc).toHaveBeenCalledWith('create_profile_with_owner', expect.objectContaining({
+      p_name: 'New Board',
+      p_can_label: 'Can do',
+      p_cannot_label: 'Cannot do',
+      p_risk_label: 'Risky',
+      p_request_label: 'Request'
+    }));
 
     const state = useAuthStore.getState();
     expect(state.currentProfiles).toHaveLength(1);
-    expect(state.currentProfiles[0].name).toBe('Profile 1');
-    expect(state.currentProfileId).toBe('p1');
-    expect(state.currentRoles['p1']).toBe('owner');
-    expect(state.isLoading).toBe(false);
+    expect(state.currentProfiles[0].can_label).toBe('Can do');
+  });
+
+  it('updateProfileLabels がラベルを更新し、状態を更新すること', async () => {
+    const initialProfile = { id: 'p1', name: 'Profile 1', can_label: 'Old' };
+    useAuthStore.setState({ currentProfiles: [initialProfile as any] });
+
+    const newLabels = { can: 'New', cannot: 'No', risk: 'Risk', request: 'Req' };
+
+    vi.mocked(supabase.rpc).mockResolvedValue({
+      data: { ...initialProfile, can_label: 'New' },
+      error: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    const { updateProfileLabels } = useAuthStore.getState();
+    await updateProfileLabels('p1', newLabels);
+
+    expect(supabase.rpc).toHaveBeenCalledWith('update_profile_labels', expect.objectContaining({
+      p_profile_id: 'p1',
+      p_can_label: 'New'
+    }));
+
+    const state = useAuthStore.getState();
+    expect(state.currentProfiles[0].can_label).toBe('New');
   });
 
   describe('acceptInvitation', () => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { useStore } from '../../store/useStore';
 import { type Category, type QuadrantId } from '../../types/index';
+import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
 
 export const AddNoteForm = () => {
   const addNote = useStore((state) => state.addNote);
@@ -11,6 +12,7 @@ export const AddNoteForm = () => {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<Category>('house');
   const [quadrant, setQuadrant] = useState<QuadrantId>('can');
+  const labels = useQuadrantLabels();
 
   // draftContent（ドロップされた内容）があればセットする
   useEffect(() => {
@@ -67,10 +69,10 @@ export const AddNoteForm = () => {
           value={quadrant}
           onChange={(e) => setQuadrant(e.target.value as QuadrantId)}
         >
-          <option value="can">できる</option>
-          <option value="cannot">できない</option>
-          <option value="risk">危険を伴う</option>
-          <option value="request">頼みたい</option>
+          <option value="can">{labels.can}</option>
+          <option value="cannot">{labels.cannot}</option>
+          <option value="risk">{labels.risk}</option>
+          <option value="request">{labels.request}</option>
           <option value="pending">保留</option>
         </select>
         <textarea

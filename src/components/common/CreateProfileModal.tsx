@@ -9,6 +9,12 @@ interface CreateProfileModalProps {
 
 export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose }) => {
   const [name, setName] = useState('');
+  const [labels, setLabels] = useState({
+    can: 'できる',
+    cannot: 'できない',
+    risk: '危険を伴う',
+    request: '頼みたい'
+  });
   const navigate = useNavigate();
   const createProfile = useAuthStore((state) => state.createProfile);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -19,12 +25,16 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
     if (!name.trim()) return;
 
     try {
-      await createProfile(name.trim());
+      await createProfile(name.trim(), labels);
       if (onClose) onClose();
       navigate('/');
     } catch (err) {
       console.error('Failed to create profile:', err);
     }
+  };
+
+  const handleLabelChange = (key: keyof typeof labels, value: string) => {
+    setLabels(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -60,6 +70,54 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
               autoFocus
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              象限のラベル（必要に応じて変更してください）
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-blue-600 ml-1">左上</span>
+                <input
+                  type="text"
+                  value={labels.can}
+                  onChange={(e) => handleLabelChange('can', e.target.value)}
+                  placeholder="できる"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-orange-600 ml-1">右上</span>
+                <input
+                  type="text"
+                  value={labels.cannot}
+                  onChange={(e) => handleLabelChange('cannot', e.target.value)}
+                  placeholder="できない"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-red-600 ml-1">左下</span>
+                <input
+                  type="text"
+                  value={labels.risk}
+                  onChange={(e) => handleLabelChange('risk', e.target.value)}
+                  placeholder="危険を伴う"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-purple-600 ml-1">右下</span>
+                <input
+                  type="text"
+                  value={labels.request}
+                  onChange={(e) => handleLabelChange('request', e.target.value)}
+                  placeholder="頼みたい"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                />
+              </div>
+            </div>
           </div>
 
           {error && (
