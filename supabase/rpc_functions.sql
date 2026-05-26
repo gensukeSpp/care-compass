@@ -25,7 +25,7 @@ BEGIN
   SELECT role INTO v_role FROM board_members 
   WHERE profile_id = p_profile_id AND user_id = auth.uid();
 
-  IF v_role <> 'owner' THEN
+  IF v_role IS NULL OR v_role <> 'owner' THEN
     RAISE EXCEPTION 'Only owners can update quadrant labels';
   END IF;
 

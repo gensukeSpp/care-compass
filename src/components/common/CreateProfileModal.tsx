@@ -2,31 +2,23 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { X, UserPlus } from 'lucide-react';
+import { useCreateProfile } from '../../hooks/useCreateProfile';
 
 interface CreateProfileModalProps {
   onClose?: () => void;
 }
 
 export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose }) => {
-  const [name, setName] = useState('');
-  const [labels, setLabels] = useState({
-    can: 'できる',
-    cannot: 'できない',
-    risk: '危険を伴う',
-    request: '頼みたい'
-  });
   const navigate = useNavigate();
-  const createProfile = useAuthStore((state) => state.createProfile);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const error = useAuthStore((state) => state.error);
+  const { name, setName, labels, setLabels, submit, error, isLoading } = useCreateProfile(() => onClose);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     try {
-      await createProfile(name.trim(), labels);
-      if (onClose) onClose();
+      // if (onClose) onClose();
+      submit();
       navigate('/');
     } catch (err) {
       console.error('Failed to create profile:', err);
@@ -84,7 +76,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
                   value={labels.can}
                   onChange={(e) => handleLabelChange('can', e.target.value)}
                   placeholder="できる"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm maxLength={15}"
                 />
               </div>
               <div className="space-y-1">
@@ -94,7 +86,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
                   value={labels.cannot}
                   onChange={(e) => handleLabelChange('cannot', e.target.value)}
                   placeholder="できない"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none text-sm maxLength={15}"
                 />
               </div>
               <div className="space-y-1">
@@ -104,7 +96,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
                   value={labels.risk}
                   onChange={(e) => handleLabelChange('risk', e.target.value)}
                   placeholder="危険を伴う"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none text-sm maxLength={15}"
                 />
               </div>
               <div className="space-y-1">
@@ -114,7 +106,7 @@ export const CreateProfileModal: React.FC<CreateProfileModalProps> = ({ onClose 
                   value={labels.request}
                   onChange={(e) => handleLabelChange('request', e.target.value)}
                   placeholder="頼みたい"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none text-sm maxLength={15}"
                 />
               </div>
             </div>

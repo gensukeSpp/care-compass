@@ -199,12 +199,12 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           // profiles テーブルと board_members テーブルを単一トランザクションで処理
-          const { data: profile, error } = await supabase.rpc('create_profile_with_owner', { 
+          const { data: profile, error } = await supabase.rpc('create_profile_with_owner', {
             p_name: name,
-            p_can_label: labels?.can || undefined,
-            p_cannot_label: labels?.cannot || undefined,
-            p_risk_label: labels?.risk || undefined,
-            p_request_label: labels?.request || undefined
+            p_can_label: labels?.can?.trim() || undefined,
+            p_cannot_label: labels?.cannot?.trim() || undefined,
+            p_risk_label: labels?.risk?.trim() || undefined,
+            p_request_label: labels?.request?.trim() || undefined
           });
 
           if (error) throw error;
@@ -231,10 +231,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data: profile, error } = await supabase.rpc('update_profile_labels', {
             p_profile_id: profileId,
-            p_can_label: labels.can,
-            p_cannot_label: labels.cannot,
-            p_risk_label: labels.risk,
-            p_request_label: labels.request
+            p_can_label: labels.can?.trim() || 'できる',
+            p_cannot_label: labels.cannot?.trim() || 'できない',
+            p_risk_label: labels.risk?.trim() || '危険を伴う',
+            p_request_label: labels.request?.trim() || '頼みたい'
           });
 
           if (error) throw error;
