@@ -43,6 +43,10 @@ export interface Profile {
   id: string;
   name: string;
   created_by: string; // user_id
+  can_label: string;
+  cannot_label: string;
+  risk_label: string;
+  request_label: string;
   created_at?: string;
   updated_at?: string;
 }

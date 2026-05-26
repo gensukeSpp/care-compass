@@ -1,6 +1,7 @@
 import { useStore } from "../../store/useStore";
 import type { QuadrantId, Category, Note } from "../../types/index";
 import { useNoteActions } from "../../hooks/useNoteAction";
+import { useQuadrantLabels } from "../../hooks/useQuadrantLabels";
 
 interface NoteFooterProps {
   note: Note;
@@ -15,6 +16,7 @@ interface NoteFooterProps {
 export function NoteFooter({ note, isEditing, setIsEditing, isPending, editTitle, editContent, editCategory }: NoteFooterProps) {
   const { selectedNoteId, selectNote, updateNote, deleteNote } = useStore();
   const { addNoteToBoard } = useNoteActions(selectedNoteId!);
+  const labels = useQuadrantLabels();
 
   const handleSave = () => {
     updateNote(note.id, {
@@ -65,12 +67,12 @@ export function NoteFooter({ note, isEditing, setIsEditing, isPending, editTitle
         ) : (
           <>
             {isPending ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <span className="text-xs text-gray-400 self-center mr-1">ボードに追加:</span>
-                <button onClick={() => handleAddToBoard('can')} className="px-3 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition-colors">できる</button>
-                <button onClick={() => handleAddToBoard('cannot')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors">できない</button>
-                <button onClick={() => handleAddToBoard('risk')} className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-xs hover:bg-orange-200 transition-colors">危険</button>
-                <button onClick={() => handleAddToBoard('request')} className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200 transition-colors">頼みたい</button>
+                <button onClick={() => handleAddToBoard('can')} className="px-3 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 transition-colors">{labels.can}</button>
+                <button onClick={() => handleAddToBoard('cannot')} className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors">{labels.cannot}</button>
+                <button onClick={() => handleAddToBoard('risk')} className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-xs hover:bg-orange-200 transition-colors">{labels.risk}</button>
+                <button onClick={() => handleAddToBoard('request')} className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200 transition-colors">{labels.request}</button>
               </div>
             ) : null}
             <button

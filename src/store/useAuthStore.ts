@@ -66,9 +66,19 @@ interface AuthState {
    * 新しいプロファイル（対象者）を作成し、作成者をオーナーとして登録します。
    * @params
    *  name :string - 対象者の名前
+   *  labels? :{ can: string; cannot: string; risk: string; request: string } - 象限のカスタムラベル
    * @return :Promise<void>
    */
-  createProfile: (name: string) => Promise<void>;
+  createProfile: (name: string, labels?: { can: string; cannot: string; risk: string; request: string }) => Promise<void>;
+
+  /**
+   * 象限のラベルを更新します。
+   * @params
+   *  profileId :string - プロファイルID
+   *  labels :{ can: string; cannot: string; risk: string; request: string } - 新しいラベル
+   * @return :Promise<void>
+   */
+  updateProfileLabels: (profileId: string, labels: { can: string; cannot: string; risk: string; request: string }) => Promise<void>;
 
   /**
    * 招待を受諾し、ボードメンバーとして参加します。
@@ -182,14 +192,20 @@ export const useAuthStore = create<AuthState>()(
 
       deselectProfile: () => set({ currentProfileId: null }),
 
-      createProfile: async (name) => {
+      createProfile: async (name, labels) => {
         const { currentUser } = get();
         if (!currentUser) throw new Error('ログインが必要です');
 
         set({ isLoading: true, error: null });
         try {
           // profiles テーブルと board_members テーブルを単一トランザクションで処理
-          const { data: profile, error } = await supabase.rpc('create_profile_with_owner', { p_name: name });
+          const { data: profile, error } = await supabase.rpc('create_profile_with_owner', {
+            p_name: name,
+            p_can_label: labels?.can?.trim() || undefined,
+            p_cannot_label: labels?.cannot?.trim() || undefined,
+            p_risk_label: labels?.risk?.trim() || undefined,
+            p_request_label: labels?.request?.trim() || undefined
+          });
 
           if (error) throw error;
 
@@ -204,6 +220,33 @@ export const useAuthStore = create<AuthState>()(
         } catch (err) {
           set({
             error: err instanceof Error ? err.message : 'プロファイルの作成に失敗しました',
+            isLoading: false
+          });
+          throw err;
+        }
+      },
+
+      updateProfileLabels: async (profileId, labels) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data: profile, error } = await supabase.rpc('update_profile_labels', {
+            p_profile_id: profileId,
+            p_can_label: labels.can?.trim() || 'できる',
+            p_cannot_label: labels.cannot?.trim() || 'できない',
+            p_risk_label: labels.risk?.trim() || '危険を伴う',
+            p_request_label: labels.request?.trim() || '頼みたい'
+          });
+
+          if (error) throw error;
+
+          const updatedProfiles = get().currentProfiles.map(p => p.id === profileId ? profile : p);
+          set({
+            currentProfiles: updatedProfiles,
+            isLoading: false
+          });
+        } catch (err) {
+          set({
+            error: err instanceof Error ? err.message : 'ラベルの更新に失敗しました',
             isLoading: false
           });
           throw err;

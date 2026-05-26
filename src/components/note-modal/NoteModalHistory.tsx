@@ -1,12 +1,21 @@
 import { Clock } from "lucide-react";
 import { type Note } from "../../types/index";
+import { useQuadrantLabels } from "../../hooks/useQuadrantLabels";
 
 interface NoteHistoryProps {
   note: Note;
   isEditing: boolean;
 }
 
+/**
+ * 付箋の象限変更履歴を表示するコンポーネント。
+ * @params
+ *  note :Note - 表示対象の付箋情報
+ *  isEditing :boolean - 編集モードかどうか
+ */
 export function NoteQuadHistory({ note, isEditing }: NoteHistoryProps) {
+  const { getLabel } = useQuadrantLabels();
+
   return (
     <>
       {!isEditing && note.history && note.history.length > 0 &&
@@ -21,9 +30,9 @@ export function NoteQuadHistory({ note, isEditing }: NoteHistoryProps) {
                 {h.timestamp &&
                   <span className="text-gray-400 shrink-0">{new Date(h.timestamp).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 }
-                <span className="font-medium">{h.from}</span>
+                <span className="font-medium">{h.from ? getLabel(h.from) : '-'}</span>
                 <span className="text-gray-300">→</span>
-                <span className="font-medium text-blue-600">{h.to}</span>
+                <span className="font-medium text-blue-600">{h.to ? getLabel(h.to) : '-'}</span>
               </li>
             ))}
           </ul>

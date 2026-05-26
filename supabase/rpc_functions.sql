@@ -1,3 +1,48 @@
+-- 1. profiles テーブルにラベルカラムを追加 (Migration SQL)
+-- ALTER TABLE profiles 
+-- ADD COLUMN can_label text DEFAULT 'できる',
+-- ADD COLUMN cannot_label text DEFAULT 'できない',
+-- ADD COLUMN risk_label text DEFAULT '危険を伴う',
+-- ADD COLUMN request_label text DEFAULT '頼みたい';
+
+-- ラベル更新用の RPC 追加
+CREATE OR REPLACE FUNCTION public.update_profile_labels(
+  p_profile_id uuid,
+  p_can_label text,
+  p_cannot_label text,
+  p_risk_label text,
+  p_request_label text
+)
+RETURNS profiles
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  updated_profile profiles%rowtype;
+  v_role text;
+BEGIN
+  -- オーナー権限チェック
+  SELECT role INTO v_role FROM board_members 
+  WHERE profile_id = p_profile_id AND user_id = auth.uid();
+
+  IF v_role IS NULL OR v_role <> 'owner' THEN
+    RAISE EXCEPTION 'Only owners can update quadrant labels';
+  END IF;
+
+  UPDATE profiles
+  SET 
+    can_label = p_can_label,
+    cannot_label = p_cannot_label,
+    risk_label = p_risk_label,
+    request_label = p_request_label,
+    updated_at = now()
+  WHERE id = p_profile_id
+  RETURNING * INTO updated_profile;
+
+  RETURN updated_profile;
+END;
+$$;
+
 -- 招待を受諾するためのRPC関数
 CREATE OR REPLACE FUNCTION public.accept_invitation(p_token text)
  RETURNS uuid -- 成功時にプロファイルIDを返す
@@ -155,12 +200,13 @@ begin
 end
 $$;
 
--- 既存の関数を削除（必要に応じて）
-DROP FUNCTION IF EXISTS public.create_profile_with_owner(text) CASCADE;
-
 -- 新しい RPC 関数を作成
-create function public.create_profile_with_owner(
-  p_name text
+CREATE OR REPLACE FUNCTION public.create_profile_with_owner(
+  p_name text,
+  p_can_label text DEFAULT 'できる',
+  p_cannot_label text DEFAULT 'できない',
+  p_risk_label text DEFAULT '危険を伴う',
+  p_request_label text DEFAULT '頼みたい'
 )
 returns profiles
 language plpgsql
@@ -170,8 +216,8 @@ declare
   new_profile profiles%rowtype;
 begin
   -- profiles テーブルに挿入
-  insert into profiles (name, created_by)
-  values (p_name, auth.uid())
+  insert into profiles (name, created_by, can_label, cannot_label, risk_label, request_label)
+  values (p_name, auth.uid(), p_can_label, p_cannot_label, p_risk_label, p_request_label)
   returning * into new_profile;
 
   -- board_members テーブルにオーナーとして登録

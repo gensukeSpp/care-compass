@@ -59,6 +59,10 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Google Keep Integration (API Sync):** API sync to fetch notes into Pending Box (Workspace accounts only).
 - [ ] **Variable Quadrant Boundaries:** Allow dragging the quadrant axes to resize areas.
 - [x] **Full Data Sync (Issue #56, #57):** All notes and change history are now fully synchronized with Supabase DB.
+- [x] **Quadrant Customization - Foundation (Issue #63):** Added custom label columns to `profiles` and updated RPCs.
+- [x] **Quadrant Customization - Creation UI (Issue #64):** Implemented 2x2 grid for label customization in `CreateProfileModal`.
+- [ ] **Quadrant Customization - Dynamic Display (Issue #65):** Reflect custom labels in board grid and forms.
+- [ ] **Board Settings UI (Issue #66):** Allow owners to update labels and profile names after creation.
 
 ## 5. Directory Structure
 ```
