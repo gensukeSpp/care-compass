@@ -12,13 +12,14 @@ interface HeaderProps {
   isLoggedIn: boolean;
   isOwner: boolean;
   setIsInviteModalOpen: (isOpen: boolean) => void;
+  setIsSettingsOpen?: (isOpen: boolean) => void;
 }
 
 /**
  * ヘッダーコンポーネントです。プロファイル名、アクションボタン、ユーザー情報を表示します。
  * モバイル対応のため、要素が多すぎる場合は折り返しを許可します。
  */
-export function Header({ currentProfile, currentUser, isLoggedIn, isOwner, setIsInviteModalOpen }: HeaderProps) {
+export function Header({ currentProfile, currentUser, isLoggedIn, isOwner, setIsInviteModalOpen, setIsSettingsOpen }: HeaderProps) {
   return (
     <header className="min-h-16 flex items-center justify-between px-4 md:px-6 py-2 bg-white border-b border-gray-200 z-50 flex-wrap gap-y-2">
       {/* 左側: プロファイル名 / ロゴ */}
@@ -38,11 +39,22 @@ export function Header({ currentProfile, currentUser, isLoggedIn, isOwner, setIs
         <div className="flex items-center gap-1 sm:gap-2">
           {isLoggedIn && <DashboardLink isLoggedIn={isLoggedIn} />}
           {currentProfile && isOwner && (
-            <InviteAction
-              currentProfile={currentProfile}
-              isOwner={isOwner}
-              setIsInviteModalOpen={setIsInviteModalOpen}
-            />
+            <>
+              <button
+                type="button"
+                className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200 mr-1"
+                onClick={() => setIsSettingsOpen?.(true)}
+                aria-label="Open board settings"
+              >
+                設定
+              </button>
+
+              <InviteAction
+                currentProfile={currentProfile}
+                isOwner={isOwner}
+                setIsInviteModalOpen={setIsInviteModalOpen}
+              />
+            </>
           )}
         </div>
 

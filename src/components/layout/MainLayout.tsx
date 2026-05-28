@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { useWebShareTarget } from "../../hooks/useWebShareTarget";
 import { InviteModal } from "../invitation/InviteModal";
+import { BoardSettingsModal } from "../board/BoardSettingsModal";
 import { useProfileRedirect } from "../../hooks/useProfileRedirect";
 import { useHeaderState } from "../../hooks/useHeaderState";
 
@@ -11,7 +12,7 @@ import { useHeaderState } from "../../hooks/useHeaderState";
  * @return :React.FC メインレイアウトコンポーネント
  */
 export function MainLayout() {
-  const { isLoggedIn, currentUser, isInviteModalOpen, setIsInviteModalOpen, currentProfile, isOwner } = useHeaderState()
+  const { isLoggedIn, currentUser, isInviteModalOpen, setIsInviteModalOpen, isSettingsOpen, setIsSettingsOpen, currentProfile, isOwner } = useHeaderState()
 
   useProfileRedirect();
   // Web Share Target 処理
@@ -19,7 +20,7 @@ export function MainLayout() {
 
   return (
     <div className="h-svh flex flex-col">
-      <Header currentProfile={currentProfile} currentUser={currentUser} isLoggedIn={isLoggedIn} isOwner={isOwner} setIsInviteModalOpen={setIsInviteModalOpen} />
+      <Header currentProfile={currentProfile} currentUser={currentUser} isLoggedIn={isLoggedIn} isOwner={isOwner} setIsInviteModalOpen={setIsInviteModalOpen} setIsSettingsOpen={setIsSettingsOpen} />
 
       {/* メインコンテンツエリア */}
       <main className="flex-1 relative overflow-hidden">
@@ -33,6 +34,15 @@ export function MainLayout() {
           onClose={() => setIsInviteModalOpen(false)}
           profileId={currentProfile.id}
           profileName={currentProfile.name}
+        />
+      )}
+
+      {/* ボード設定モーダル */}
+      {currentProfile && (
+        <BoardSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          profile={currentProfile}
         />
       )}
     </div>
