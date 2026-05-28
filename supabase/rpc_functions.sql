@@ -1,3 +1,36 @@
+CREATE OR REPLACE FUNCTION public.delete_profile_cascade(p_profile_id uuid)
+  RETURNS uuid
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  AS $$
+  DECLARE
+    v_role text;
+    v_deleted uuid;
+  BEGIN
+    -- オーナー確認
+    SELECT role INTO v_role FROM board_members
+      WHERE profile_id = p_profile_id AND user_id = auth.uid();
+  
+    IF v_role IS NULL OR v_role <> 'owner' THEN
+      RAISE EXCEPTION 'Only owners can delete profiles';
+    END IF;
+  
+    -- 依存データ削除（必要に応じてテーブルを調整）
+    DELETE FROM note_history WHERE note_id IN (SELECT id FROM sticky_notes 
+WHERE profile_id = p_profile_id);
+    DELETE FROM sticky_notes WHERE profile_id = p_profile_id;
+    DELETE FROM board_members WHERE profile_id = p_profile_id;
+    DELETE FROM invitations WHERE profile_id = p_profile_id;
+    DELETE FROM pending_notes WHERE profile_id = p_profile_id; -- 存在するなら
+    -- 他の関連テーブルもここで削除（tasks, attachments など）
+  
+    -- 最後にプロファイル本体を削除して id を返す
+    DELETE FROM profiles WHERE id = p_profile_id RETURNING id INTO v_deleted;
+  
+    RETURN v_deleted;
+  END;
+  $$;
+
 -- 1. profiles テーブルにラベルカラムを追加 (Migration SQL)
 -- ALTER TABLE profiles 
 -- ADD COLUMN can_label text DEFAULT 'できる',

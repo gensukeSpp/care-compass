@@ -2,21 +2,21 @@
 
 Branch: feature/customize-quadrant/66
 
-- [ ] 1. ヘッダーに「設定」ボタンを追加
+- [ - ] 1. ヘッダーに「設定」ボタンを追加
   - 変更箇所: src/components/layout/Header.tsx
   - 注: ダッシュボードからもアクセス可能にする
 
-- [ ] 2. BoardSettings コンポーネント作成（モーダルまたはページ）
+- [ - ] 2. BoardSettings コンポーネント作成（モーダルまたはページ）
   - 新規: src/components/board/BoardSettingsModal.tsx
   - 入力項目: プロファイル名（対象者名）、4象限ラベル（text ×4）
   - UX: 保存 / キャンセル / デフォルトに戻す
 
-- [ ] 3. ストア連携と RPC 呼び出し
+- [ - ] 3. ストア連携と RPC 呼び出し
   - 参照/更新箇所: src/store/useProfileStore.ts（既存の store 名に合わせる）
   - RPC: update_profile_labels を呼び出して永続化
   - エラー処理: トースト表示、ロールバック不要（入力は上書き）
 
-- [ ] 4. 権限チェック（オーナーのみ削除等）
+- [ - ] 4. 権限チェック（オーナーのみ削除等）
   - useAuthStore から currentUser / roles を参照
   - 削除ボタンはオーナーのみ表示
 
@@ -25,7 +25,7 @@ Branch: feature/customize-quadrant/66
   - 削除成功後: ダッシュボードへ遷移
 
 - [ ] 6. テスト
-  - ユニット: コンポーネントの保存処理、ストア連携
+  - ユニット: ~~コンポーネントの保存処理、~~ストア連携
   - E2E/統合: 設定が保存され他ユーザーに反映される流れ
 
 - [ ] 7. ドキュメント更新

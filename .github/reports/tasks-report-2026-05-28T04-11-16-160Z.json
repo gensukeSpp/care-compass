@@ -1,0 +1,15 @@
+{
+  "scanned": 1,
+  "totalRefs": 1,
+  "totalMissing": 0,
+  "report": [
+    {
+      "file": "tasks/66-board-settings-tasks.md",
+      "refs": [
+        "src/components/layout/Header.tsx"
+      ],
+      "missing": []
+    }
+  ],
+  "repo": "/home/nabu_dvl/workspace/4-quadrant-action-board/care-compass"
+}

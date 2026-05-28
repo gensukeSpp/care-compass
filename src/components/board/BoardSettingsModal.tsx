@@ -12,6 +12,7 @@ interface Props {
 
 export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
   const updateProfileLabels = useAuthStore((s) => s.updateProfileLabels);
+  const deleteProfile = useAuthStore((s) => s.deleteProfile);
   const checkAuth = useAuthStore((s) => s.checkAuth);
   const roles = useAuthStore((s) => s.currentRoles);
   const navigate = useNavigate();
@@ -79,10 +80,9 @@ export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
-      if (error) throw error;
+      await deleteProfile(profile.id);
 
-      // プロファイル一覧を再取得してフロントを更新
+      // プロファイル一覧を再取得してフロントを更新（必要なら）
       await checkAuth();
 
       // 削除後はダッシュボードへ遷移

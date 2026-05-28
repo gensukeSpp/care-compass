@@ -273,6 +273,41 @@ export const useAuthStore = create<AuthState>()(
           throw err;
         }
       },
+
+      deleteProfile: async (profileId) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data: deletedId, error } = await supabase.rpc('delete_profile_cascade', { p_profile_id: profileId });
+          if (error) throw error;
+
+          // ストアを原子的に更新
+          set((state) => {
+            const updatedProfiles = state.currentProfiles.filter((p) => p.id !== profileId);
+            const updatedRoles = { ...state.currentRoles };
+            delete updatedRoles[profileId];
+
+            let updatedCurrentProfileId = state.currentProfileId;
+            if (state.currentProfileId === profileId) {
+              updatedCurrentProfileId = updatedProfiles.length ? updatedProfiles[0].id : null;
+            }
+
+            return {
+              currentProfiles: updatedProfiles,
+              currentRoles: updatedRoles,
+              currentProfileId: updatedCurrentProfileId,
+              isLoading: false,
+            };
+          });
+
+          return deletedId as string;
+        } catch (err) {
+          set({
+            error: err instanceof Error ? err.message : 'プロファイルの削除に失敗しました',
+            isLoading: false,
+          });
+          throw err;
+        }
+      },
     }),
     {
       name: 'auth-storage',
