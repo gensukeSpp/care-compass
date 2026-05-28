@@ -79,7 +79,7 @@ interface AuthState {
    * @return :Promise<void>
    */
   updateProfileLabels: (profileId: string, labels: { can: string; cannot: string; risk: string; request: string }) => Promise<void>;
-
+  deleteProfile: (profileId: string) => Promise<string>;
   /**
    * 招待を受諾し、ボードメンバーとして参加します。
    * @params
@@ -274,7 +274,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      deleteProfile: async (profileId) => {
+      deleteProfile: async (profileId: string) => {
         set({ isLoading: true, error: null });
         try {
           const { data: deletedId, error } = await supabase.rpc('delete_profile_cascade', { p_profile_id: profileId });
