@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/useAuthStore';
 import type { Profile } from '../../types/index';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface Props {
 export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
   const updateProfileLabels = useAuthStore((s) => s.updateProfileLabels);
   const checkAuth = useAuthStore((s) => s.checkAuth);
+  const roles = useAuthStore((s) => s.currentRoles);
+  const navigate = useNavigate();
 
   const [name, setName] = useState(profile.name || '');
   const [canLabel, setCanLabel] = useState(profile.can_label || 'できる');
@@ -19,6 +22,8 @@ export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
   const [riskLabel, setRiskLabel] = useState(profile.risk_label || '危険を伴う');
   const [requestLabel, setRequestLabel] = useState(profile.request_label || '頼みたい');
   const [isSaving, setIsSaving] = useState(false);
+
+  const isOwner = roles && profile && profile.id ? roles[profile.id] === 'owner' : false;
 
   useEffect(() => {
     setName(profile.name || '');
@@ -67,6 +72,30 @@ export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!profile || !profile.id) return;
+    const ok = window.confirm('このボードと関連データを完全に削除します。よろしいですか？（元に戻せません）');
+    if (!ok) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
+      if (error) throw error;
+
+      // プロファイル一覧を再取得してフロントを更新
+      await checkAuth();
+
+      // 削除後はダッシュボードへ遷移
+      navigate('/dashboard');
+      onClose();
+    } catch (err) {
+      console.error('Failed to delete profile', err);
+      alert(err instanceof Error ? err.message : '削除に失敗しました');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -102,10 +131,19 @@ export function BoardSettingsModal({ isOpen, onClose, profile }: Props) {
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200" onClick={handleReset} disabled={isSaving}>デフォルトに戻す</button>
-          <button type="button" className="px-3 py-1 rounded bg-white border" onClick={onClose} disabled={isSaving}>キャンセル</button>
-          <button type="button" className="px-4 py-1 rounded bg-indigo-600 text-white" onClick={handleSave} disabled={isSaving}>{isSaving ? '保存中...' : '保存'}</button>
+        <div className="mt-6 flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {isOwner ? 'オーナーとしてボードの設定を編集できます。' : 'このボードの設定を編集する権限がありません。'}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button type="button" className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200" onClick={handleReset} disabled={isSaving}>デフォルトに戻す</button>
+            <button type="button" className="px-3 py-1 rounded bg-white border" onClick={onClose} disabled={isSaving}>キャンセル</button>
+            {isOwner && (
+              <button type="button" className="px-3 py-1 rounded bg-red-600 text-white mr-2" onClick={handleDelete} disabled={isSaving}>{isSaving ? '削除中...' : 'ボードを削除'}</button>
+            )}
+            <button type="button" className="px-4 py-1 rounded bg-indigo-600 text-white" onClick={handleSave} disabled={isSaving}>{isSaving ? '保存中...' : '保存'}</button>
+          </div>
         </div>
       </div>
     </div>
