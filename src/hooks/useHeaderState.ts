@@ -9,6 +9,7 @@ export const useHeaderState = () => {
   const currentRoles = useAuthStore((state) => state.currentRoles);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const currentProfile = currentProfiles.find((p) => p.id === currentProfileId);
   const isOwner = currentProfileId ? currentRoles[currentProfileId] === 'owner' : false;
@@ -18,6 +19,8 @@ export const useHeaderState = () => {
     currentUser,
     isInviteModalOpen,
     setIsInviteModalOpen,
+    isSettingsOpen,
+    setIsSettingsOpen,
     currentProfile,
     isOwner,
   };

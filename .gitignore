@@ -25,3 +25,8 @@ dist-ssr
 *.sw?
 
 .serena/
+.roo/
+.wrangler/
+.env
+.dev.vars
+.playwright-mcp/

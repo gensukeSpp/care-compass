@@ -1,3 +1,35 @@
+CREATE OR REPLACE FUNCTION public.delete_profile_cascade(p_profile_id uuid)
+  RETURNS uuid
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  AS $$
+  DECLARE
+    v_role text;
+    v_deleted uuid;
+  BEGIN
+    -- オーナー確認
+    SELECT role INTO v_role FROM board_members
+      WHERE profile_id = p_profile_id AND user_id = auth.uid();
+  
+    IF v_role IS NULL OR v_role <> 'owner' THEN
+      RAISE EXCEPTION 'Only owners can delete profiles';
+    END IF;
+  
+    -- 依存データは外部キー制約 (ON DELETE CASCADE) により自動削除されるため、
+    -- profiles 本体を削除するのみでよい
+    DELETE FROM profiles WHERE id = p_profile_id RETURNING id INTO v_deleted;
+  
+    RETURN v_deleted;
+  END;
+  $$;
+
+-- 既存の制約を削除
+ALTER TABLE board_members DROP CONSTRAINT board_members_profile_id_fkey;
+-- CASCADE 付きで制約を再作成
+ALTER TABLE board_members 
+ADD CONSTRAINT board_members_profile_id_fkey 
+FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
+
 -- 1. profiles テーブルにラベルカラムを追加 (Migration SQL)
 -- ALTER TABLE profiles 
 -- ADD COLUMN can_label text DEFAULT 'できる',
