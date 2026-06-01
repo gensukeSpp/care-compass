@@ -15,21 +15,20 @@ CREATE OR REPLACE FUNCTION public.delete_profile_cascade(p_profile_id uuid)
       RAISE EXCEPTION 'Only owners can delete profiles';
     END IF;
   
-    -- 依存データ削除（必要に応じてテーブルを調整）
-    DELETE FROM note_history WHERE note_id IN (SELECT id FROM sticky_notes 
-WHERE profile_id = p_profile_id);
-    DELETE FROM sticky_notes WHERE profile_id = p_profile_id;
-    DELETE FROM board_members WHERE profile_id = p_profile_id;
-    DELETE FROM invitations WHERE profile_id = p_profile_id;
-    DELETE FROM pending_notes WHERE profile_id = p_profile_id; -- 存在するなら
-    -- 他の関連テーブルもここで削除（tasks, attachments など）
-  
-    -- 最後にプロファイル本体を削除して id を返す
+    -- 依存データは外部キー制約 (ON DELETE CASCADE) により自動削除されるため、
+    -- profiles 本体を削除するのみでよい
     DELETE FROM profiles WHERE id = p_profile_id RETURNING id INTO v_deleted;
   
     RETURN v_deleted;
   END;
   $$;
+
+-- 既存の制約を削除
+ALTER TABLE board_members DROP CONSTRAINT board_members_profile_id_fkey;
+-- CASCADE 付きで制約を再作成
+ALTER TABLE board_members 
+ADD CONSTRAINT board_members_profile_id_fkey 
+FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE;
 
 -- 1. profiles テーブルにラベルカラムを追加 (Migration SQL)
 -- ALTER TABLE profiles 
