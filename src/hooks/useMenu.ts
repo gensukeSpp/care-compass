@@ -5,8 +5,10 @@ export function useMenu() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     function onDocClick(e: MouseEvent) {
-      if (isOpen && ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }

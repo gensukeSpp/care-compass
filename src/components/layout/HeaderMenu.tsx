@@ -7,7 +7,7 @@ import { InviteAction } from '../invitation/InviteAction';
 import { useMenu } from '../../hooks/useMenu';
 
 interface HeaderMenuProps {
-  currentProfile: Profile | undefined;
+  currentProfile: Profile;
   currentUser: User | null;
   isLoggedIn: boolean;
   isOwner: boolean;
@@ -46,7 +46,7 @@ export function HeaderMenu({ currentProfile, currentUser, isLoggedIn, isOwner, s
           <div className="p-3 flex flex-col gap-2">
             {isLoggedIn && <DashboardLink isLoggedIn={isLoggedIn} />}
 
-            {currentProfile && isOwner && (
+            {isOwner && (
               <>
                 <button
                   type="button"

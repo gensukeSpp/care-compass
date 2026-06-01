@@ -43,12 +43,8 @@ export function Header({ currentProfile, currentUser, isLoggedIn, isOwner, setIs
         />
       ) : (
         <UserStatusArea
-          currentProfile={currentProfile}
           currentUser={currentUser}
           isLoggedIn={isLoggedIn}
-          isOwner={isOwner}
-          setIsInviteModalOpen={setIsInviteModalOpen}
-          setIsSettingsOpen={setIsSettingsOpen}
         />
       )}
     </header>
