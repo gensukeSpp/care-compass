@@ -1,0 +1,38 @@
+# sample agent_type.yml
+# リポジトリで利用するサンプルエージェント定義。必要に応じて編集してください。
+agent_types:
+  - name: history-list-checker
+    description: "Checks history-list implementation against docs and tasks"
+    entrypoint: "issue-implementation-checker"
+    model: "gpt-4.1"
+    mode: "sync"
+    timeout_seconds: 120
+    permissions:
+      - read:repo
+      - write:repo
+    labels: ["code-review", "history"]
+
+  - name: explore-code
+    description: "Exploration agent for multi-file research and discovery"
+    entrypoint: "explore"
+    model: "claude-haiku-4.5"
+    mode: "background"
+    timeout_seconds: 600
+    permissions:
+      - read:repo
+    labels: ["explore"]
+
+  - name: general-purpose
+    description: "General purpose agent for complex multi-step tasks"
+    entrypoint: "general-purpose"
+    model: "gpt-5-mini"
+    mode: "sync"
+    timeout_seconds: 300
+    permissions:
+      - read:repo
+      - write:repo
+    labels: ["general"]
+
+# 使用例:
+# - issue-implementation-checker を使いたいときは `history-list-checker` を指定して起動してください。
+# - モデルや権限は運用ポリシーに合わせて更新してください。
