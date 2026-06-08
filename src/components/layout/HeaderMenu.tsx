@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { type Profile } from '../../types/index';
 import type { User } from '../../store/useAuthStore';
 import { LoginButton } from '../auth/LoginButton';
@@ -45,6 +46,16 @@ export function HeaderMenu({ currentProfile, currentUser, isLoggedIn, isOwner, s
         <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg z-50">
           <div className="p-3 flex flex-col gap-2">
             {isLoggedIn && <DashboardLink isLoggedIn={isLoggedIn} />}
+
+            {isLoggedIn && (
+              <Link
+                to="/history"
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                onClick={() => setIsOpen(false)}
+              >
+                変更履歴
+              </Link>
+            )}
 
             {isOwner && (
               <>

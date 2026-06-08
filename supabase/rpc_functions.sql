@@ -261,3 +261,35 @@ begin
 end;
 $$;
 
+-- get_all_history: 指定されたプロファイルIDの全履歴を取得する
+CREATE OR REPLACE FUNCTION public.get_all_history(p_profile_id uuid)
+RETURNS TABLE(
+  history_id uuid,
+  note_id uuid,
+  note_title text,
+  from_status text,
+  to_status text,
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- 権限チェック：ユーザーがこのボードのメンバーであること
+  IF NOT EXISTS (
+    SELECT 1 FROM board_members
+    WHERE profile_id = p_profile_id AND user_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    h.id, h.note_id, n.title, h.from_status, h.to_status, h.created_at
+  FROM note_history h
+  JOIN sticky_notes n ON h.note_id = n.id
+  WHERE n.profile_id = p_profile_id
+  ORDER BY h.created_at DESC;
+END;
+$$;
+
