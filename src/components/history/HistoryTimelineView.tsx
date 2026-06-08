@@ -16,6 +16,15 @@ interface HistoryTimelineViewProps {
 export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
   const { getLabel } = useQuadrantLabels();
   const selectNote = useStore((s) => s.selectNote);
+  const notes = useStore((s) => s.notes);
+  const pendingNotes = useStore((s) => s.pendingNotes);
+
+  const existingNoteIds = new Set([
+    ...notes.map((n) => n.id),
+    ...pendingNotes.map((n) => n.id),
+  ]);
+
+  history = history.filter((h) => !existingNoteIds.has(h.note_id));
 
   if (history.length === 0) {
     return <div className="text-center text-gray-500 py-10">履歴はありません。</div>;
@@ -25,7 +34,7 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-gray-600" aria-label="変更履歴一覧">
         <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-          <tr>
+          <tr className={!existingNoteIds ? "cursor-pointer-none opacity-60" : ""}>
             <th className="px-6 py-3">日時</th>
             <th className="px-6 py-3">付箋タイトル</th>
             <th className="px-6 py-3">状態変化</th>
@@ -37,12 +46,14 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
               key={h.history_id}
               className="bg-white border-b hover:bg-gray-50 cursor-pointer"
               role="button"
-              tabIndex={0}
+              tabIndex={existingNoteIds.has(h.note_id) ? 0 : undefined}
               onClick={() => {
-                selectNote(h.note_id);
+                if (existingNoteIds.has(h.note_id)) {
+                  selectNote(h.note_id);
+                }
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (existingNoteIds.has(h.note_id) && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   selectNote(h.note_id);
                 }

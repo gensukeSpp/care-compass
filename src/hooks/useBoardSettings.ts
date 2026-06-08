@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
@@ -11,7 +11,7 @@ export function useBoardSettings(profile: Profile, onClose: () => void) {
   // const checkAuth = useAuthStore((s) => s.checkAuth);
   const navigate = useNavigate();
 
-  const save = async (updatedProfile?: Profile) => {
+  const save = useCallback(async (updatedProfile?: Profile) => {
     if (!profile || !profile.id) return;
     const profileToSave = updatedProfile || profile;
     const trimmedName = profileToSave.name.trim();
@@ -46,9 +46,9 @@ export function useBoardSettings(profile: Profile, onClose: () => void) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [profile, updateProfileLabels, onClose]);
 
-  const remove = async (profile_id: string) => {
+  const remove = useCallback(async (profile_id: string) => {
     if (!profile || !profile.id) return;
     const ok = window.confirm('このボードと関連データを完全に削除します。よろしいですか？（元に戻せません）');
     if (!ok) return;
@@ -69,6 +69,7 @@ export function useBoardSettings(profile: Profile, onClose: () => void) {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [profile, deleteProfile, navigate, onClose]);
+
   return { isSaving, save, remove };
 }

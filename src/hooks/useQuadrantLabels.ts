@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import type { QuadrantId, Profile } from '../types/index';
 
@@ -18,7 +19,7 @@ export const useQuadrantLabels = () => {
     request: profile?.request_label || '頼みたい',
   };
 
-  const getLabel = (id: QuadrantId): string => {
+  const getLabel = useCallback((id: QuadrantId): string => {
     switch (id) {
       case 'can': return labels.can;
       case 'cannot': return labels.cannot;
@@ -27,7 +28,7 @@ export const useQuadrantLabels = () => {
       case 'pending': return '保留';
       default: return id;
     }
-  };
+  }, [labels]);
 
   return { ...labels, getLabel };
 };

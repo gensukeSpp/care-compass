@@ -46,7 +46,7 @@ export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
                 {noteHistory.map((h) => (
                   <li
                     key={h.history_id}
-                    className="text-sm text-gray-600 flex items-center gap-4 bg-white p-2 rounded border cursor-pointer"
+                    className="text-sm text-gray-600 flex items-center gap-4 bg-white p-2 rounded border hover:bg-gray-50 cursor-pointer"
                     role="button"
                     tabIndex={0}
                     onClick={() => { selectNote(h.note_id); }}
