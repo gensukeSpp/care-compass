@@ -24,7 +24,7 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
     ...pendingNotes.map((n) => n.id),
   ]);
 
-  history = history.filter((h) => !existingNoteIds.has(h.note_id));
+  history = history.filter((h) => existingNoteIds.has(h.note_id));
 
   if (history.length === 0) {
     return <div className="text-center text-gray-500 py-10">履歴はありません。</div>;

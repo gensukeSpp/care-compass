@@ -61,7 +61,7 @@ export function HeaderMenu({ currentProfile, currentUser, isLoggedIn, isOwner, s
               <>
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 text-sm bg-gray-50 rounded hover:bg-gray-100"
+                  className="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100"
                   onClick={() => { setIsSettingsOpen?.(true); setIsOpen(false); }}
                 >
                   設定
