@@ -63,6 +63,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [x] **Quadrant Customization - Creation UI (Issue #64):** Implemented 2x2 grid for label customization in `CreateProfileModal`.
 - [ ] **Quadrant Customization - Dynamic Display (Issue #65):** Reflect custom labels in board grid and forms.
 - [ ] **Board Settings UI (Issue #66):** Allow owners to update labels and profile names after creation.
+- [x] **History List Page (Issue #70):** Implement a history view page that allows users to see the changes made to sticky notes.
 
 ## 5. Directory Structure
 ```

@@ -28,7 +28,7 @@ export function NoteQuadHistory({ note, isEditing }: NoteHistoryProps) {
             {note.history.map((h, index) => (
               <li key={index} className="flex gap-2">
                 {h.timestamp &&
-                  <span className="text-gray-400 shrink-0">{new Date(h.timestamp).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-gray-400 shrink-0">{new Date(h.timestamp).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 }
                 <span className="font-medium">{h.from ? getLabel(h.from) : '-'}</span>
                 <span className="text-gray-300">→</span>

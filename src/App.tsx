@@ -3,6 +3,7 @@ import { AuthCallback } from './pages/AuthCallback';
 import { BoardPage } from './components/board/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { JoinPage } from './pages/JoinPage';
+import { HistoryPage } from './pages/HistoryPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { useAuthGuard } from './hooks/useAuthGuard';
 
@@ -21,6 +22,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/join" element={<JoinPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/history" element={<HistoryPage />} />
       </Route>
     </Routes>
   );
