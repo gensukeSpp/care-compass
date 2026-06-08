@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const useCreateProfile = (onSuccess: () => void) => {
@@ -14,10 +14,10 @@ export const useCreateProfile = (onSuccess: () => void) => {
   const isLoading = useAuthStore((state) => state.isLoading);
   const error = useAuthStore((state) => state.error);
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     await createProfile(name.trim(), labels);
     onSuccess();
-  };
+  }, [name, labels, createProfile, onSuccess]);
 
   return { name, setName, labels, setLabels, submit, isLoading, error };
 };

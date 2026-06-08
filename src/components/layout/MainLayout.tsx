@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { useWebShareTarget } from "../../hooks/useWebShareTarget";
 import { InviteModal } from "../invitation/InviteModal";
 import { BoardSettingsModal } from "../board/BoardSettingsModal";
+import { NoteModalTop } from "../note-modal/NoteModal";
 import { useProfileRedirect } from "../../hooks/useProfileRedirect";
 import { useHeaderState } from "../../hooks/useHeaderState";
 
@@ -24,6 +25,7 @@ export function MainLayout() {
 
       {/* メインコンテンツエリア */}
       <main className="flex-1 relative overflow-hidden">
+        <NoteModalTop />
         <Outlet />
       </main>
 

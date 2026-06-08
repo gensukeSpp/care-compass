@@ -1,7 +1,6 @@
 import { DndContext } from '@dnd-kit/core';
 import { useBoardDnd } from '../../hooks/useBoardDnd';
 import { AddNoteForm } from '../../components/common/AddNoteForm';
-import { NoteModalTop } from '../../components/note-modal/NoteModal';
 import { BoardReference } from './BoardReference';
 import { PendingDrawer } from '../../components/pending/PendingDrawer';
 
@@ -11,7 +10,6 @@ export function BoardContent() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="relative h-full overflow-hidden bg-gray-50">
-        <NoteModalTop />
         <AddNoteForm />
         <BoardReference ref={boardRef} />
         <PendingDrawer />

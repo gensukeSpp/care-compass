@@ -4,21 +4,19 @@ import { useQuadrantLabels } from "../../hooks/useQuadrantLabels";
 
 interface NoteHistoryProps {
   note: Note;
-  isEditing: boolean;
 }
 
 /**
  * 付箋の象限変更履歴を表示するコンポーネント。
  * @params
  *  note :Note - 表示対象の付箋情報
- *  isEditing :boolean - 編集モードかどうか
  */
-export function NoteQuadHistory({ note, isEditing }: NoteHistoryProps) {
+export function NoteQuadHistory({ note }: NoteHistoryProps) {
   const { getLabel } = useQuadrantLabels();
 
   return (
-    <>
-      {!isEditing && note.history && note.history.length > 0 &&
+    <> {/* The parent component already handles conditional rendering based on `isEditing` */}
+      {note.history && note.history.length > 0 &&
         <div className="px-6 py-4 border-t bg-gray-50/50">
           <h3 className="font-bold text-sm mb-2 text-gray-600 flex items-center gap-2">
             <Clock width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></Clock>
