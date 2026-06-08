@@ -1,14 +1,15 @@
-import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
 import { useNavigate } from 'react-router-dom';
+import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
 import { useStore } from '../../store/useStore';
+import type { QuadrantId } from '../../types';
 
 interface HistoryTimelineViewProps {
   history: {
     history_id: string;
     note_id: string;
     note_title: string;
-    from_status: string;
-    to_status: string;
+    from_status: QuadrantId;
+    to_status: QuadrantId;
     created_at: string;
   }[];
 }
@@ -62,9 +63,9 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
               </td>
               <td className="px-6 py-4 font-medium text-gray-900">{h.note_title}</td>
               <td className="px-6 py-4">
-                <span className="bg-gray-100 px-2 py-1 rounded text-xs">{getLabel(h.from_status as any)}</span>
+                <span className="bg-gray-100 px-2 py-1 rounded text-xs">{getLabel(h.from_status)}</span>
                 <span className="mx-2 text-gray-400">→</span>
-                <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">{getLabel(h.to_status as any)}</span>
+                <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">{getLabel(h.to_status)}</span>
               </td>
             </tr>
           ))}

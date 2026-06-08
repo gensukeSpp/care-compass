@@ -1,6 +1,6 @@
-import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
-import { type Note } from '../../types/index';
 import { useNavigate } from 'react-router-dom';
+import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
+import { type Note, type QuadrantId } from '../../types/index';
 import { useStore } from '../../store/useStore';
 
 interface HistoryNoteViewProps {
@@ -8,8 +8,8 @@ interface HistoryNoteViewProps {
     history_id: string;
     note_id: string;
     note_title: string;
-    from_status: string;
-    to_status: string;
+    from_status: QuadrantId;
+    to_status: QuadrantId;
     created_at: string;
   }[];
   allNotes: Note[]; // Add allNotes to identify notes without history
@@ -33,7 +33,7 @@ export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
     <div className="space-y-6">
       {allNotes.map((note) => {
         const noteHistory = historyByNoteId[note.id] || [];
-        
+
         return (
           <div key={note.id} className="border rounded-lg p-4 bg-gray-50">
             <div className="flex justify-between items-center mb-3">
@@ -42,7 +42,7 @@ export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
                 現在: {getLabel(note.status)}
               </span>
             </div>
-            
+
             {noteHistory.length > 0 ? (
               <ul className="space-y-2" role="list" aria-label={`履歴一覧: ${note.title}`}>
                 {noteHistory.map((h) => (
@@ -62,9 +62,9 @@ export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
                         minute: '2-digit',
                       })}
                     </span>
-                    <span className="bg-gray-100 px-2 py-1 rounded text-xs">{getLabel(h.from_status as any)}</span>
+                    <span className="bg-gray-100 px-2 py-1 rounded text-xs">{getLabel(h.from_status)}</span>
                     <span className="text-gray-400">→</span>
-                    <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">{getLabel(h.to_status as any)}</span>
+                    <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">{getLabel(h.to_status)}</span>
                   </li>
                 ))}
               </ul>

@@ -5,13 +5,14 @@ import { useStore } from '../store/useStore';
 import { LoadingView } from '../components/common/LoadingView';
 import { HistoryTimelineView } from '../components/history/HistoryTimelineView';
 import { HistoryNoteView } from '../components/history/HistoryNoteView';
+import type { QuadrantId } from '../types';
 
 interface HistoryItem {
   history_id: string;
   note_id: string;
   note_title: string;
-  from_status: string;
-  to_status: string;
+  from_status: QuadrantId;
+  to_status: QuadrantId;
   created_at: string;
 }
 
@@ -20,27 +21,38 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'timeline' | 'note'>('timeline');
   const currentProfileId = useAuthStore((state) => state.currentProfileId);
-  const allNotes = useStore((state) => state.notes);
+  const notes = useStore((state) => state.notes);
+  const pendingNotes = useStore((state) => state.pendingNotes);
+  const fetchNotes = useStore((state) => state.fetchNotes);
+  const allNotes = [...notes, ...pendingNotes];
 
   useEffect(() => {
-    if (!currentProfileId) return;
+    if (!currentProfileId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchHistory = async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc('get_all_history', {
-        p_profile_id: currentProfileId,
-      });
-
-      if (error) {
-        console.error('Error fetching history:', error);
-      } else {
-        setHistory(data || []);
+      try {
+        await Promise.all([
+          supabase.rpc('get_all_history', {
+            p_profile_id: currentProfileId,
+          }).then(({ data, error }) => {
+            if (error) throw error;
+            setHistory(data || []);
+          }),
+          fetchNotes(currentProfileId)
+        ]);
+      } catch (error) {
+        console.error('Error fetching history or notes:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchHistory();
-  }, [currentProfileId]);
+  }, [currentProfileId, fetchNotes]);
 
   if (loading) return <LoadingView currentProfileId={currentProfileId} isLoading={loading} />;
 
