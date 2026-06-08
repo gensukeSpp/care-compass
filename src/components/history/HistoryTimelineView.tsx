@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
 import { useStore } from '../../store/useStore';
 import type { QuadrantId } from '../../types';
@@ -17,7 +16,6 @@ interface HistoryTimelineViewProps {
 export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
   const { getLabel } = useQuadrantLabels();
   const selectNote = useStore((s) => s.selectNote);
-  const navigate = useNavigate();
 
   if (history.length === 0) {
     return <div className="text-center text-gray-500 py-10">履歴はありません。</div>;
@@ -42,13 +40,11 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
               tabIndex={0}
               onClick={() => {
                 selectNote(h.note_id);
-                navigate('/');
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   selectNote(h.note_id);
-                  navigate('/');
                 }
               }}
             >

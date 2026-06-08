@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useQuadrantLabels } from '../../hooks/useQuadrantLabels';
 import { type Note, type QuadrantId } from '../../types/index';
 import { useStore } from '../../store/useStore';
@@ -18,7 +17,6 @@ interface HistoryNoteViewProps {
 export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
   const { getLabel } = useQuadrantLabels();
   const selectNote = useStore((s) => s.selectNote);
-  const navigate = useNavigate();
 
   // Create a map for quick history lookup
   const historyByNoteId = history.reduce((acc, h) => {
@@ -51,8 +49,8 @@ export function HistoryNoteView({ history, allNotes }: HistoryNoteViewProps) {
                     className="text-sm text-gray-600 flex items-center gap-4 bg-white p-2 rounded border cursor-pointer"
                     role="button"
                     tabIndex={0}
-                    onClick={() => { selectNote(h.note_id); navigate('/'); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNote(h.note_id); navigate('/'); } }}
+                    onClick={() => { selectNote(h.note_id); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectNote(h.note_id); } }}
                   >
                     <span className="text-gray-400 text-xs w-28">
                       {new Date(h.created_at).toLocaleString('ja-JP', {

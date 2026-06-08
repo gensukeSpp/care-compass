@@ -1,5 +1,5 @@
 import { useNoteModalState } from "../../hooks/useNoteState"
-import { type Category } from "../../types";
+import { categoryLabels } from "./categoryLabels";
 import { NoteEditForm } from "./NoteModalEditForm";
 import { NoteHeader } from "./NoteModalHeader";
 import { NoteModalWrapper } from "./NoteModalWrapper";
@@ -12,14 +12,6 @@ export function NoteModalTop() {
   const { note, isEditing, setIsEditing, isPending, selectNote, editTitle, setEditTitle, editContent, setEditContent, editCategory, setEditCategory } = useNoteModalState();
 
   if (!note) return null;
-
-  const categoryLabels: Record<Category, string> = {
-    house: '🏠 居住・環境',
-    food: '🍱 食生活',
-    health: '💪 身体・体力',
-    medical: '💊 医療・健康',
-    social: '🧑‍🤝‍🧑 社会・交流',
-  };
 
   return (
     <NoteModalWrapper>
@@ -53,7 +45,6 @@ export function NoteModalTop() {
             />
             <NoteQuadHistory
               note={note}
-              isEditing={isEditing}
             />
           </>
         )}
