@@ -1,10 +1,12 @@
 import { useCallback } from 'react';
 import { MouseSensor, TouchSensor, DragOverlay, useSensors, useSensor } from '@dnd-kit/core';
+import { useStore } from '../store/useStore';
 import { useDragOnBoard } from "./useDragOnBoard"
 import { StickyNoteView } from '../components/sticky-note/StickyNoteView';
 
 export const useBoardDnd = () => {
-  const { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, boardRef } = useDragOnBoard();
+  const { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, handleDragCancel, boardRef } = useDragOnBoard();
+  const activeCategory = useStore(state => state.activeCategory);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -30,16 +32,18 @@ export const useBoardDnd = () => {
             title={activeNote.title}
             category={activeNote.category}
             isOverlay={true}
+            activeCategory={activeCategory}
           />
         ) : null}
       </DragOverlay>
     );
-  }, [activeId, activeNote]);
+  }, [activeId, activeNote, activeCategory]);
 
   return {
     sensors,
     handleDragStart,
     handleDragEnd,
+    handleDragCancel,
     activeOverlay,
     boardRef
   };

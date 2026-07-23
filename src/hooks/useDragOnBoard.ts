@@ -1,8 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import type { ClientRect, DragEndEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useStore } from "../store/useStore";
-import { getQuadrantFromPosition, convertToBoardPercentages, getActiveNoteInfo } from '../utils/positionUtils';
-import type { Note } from "../types";
+import { convertToBoardPercentages, getActiveNoteInfo } from '../utils/positionUtils';
 
 export const useDragOnBoard = () => {
   const { notes, pendingNotes, updateNotePositionAndStatus, moveToBoard, mergeNotes, setActiveCategory } = useStore();
@@ -66,5 +65,11 @@ export const useDragOnBoard = () => {
     }
   }, [notes, calculatePosition, mergeNotes, moveToBoard, updateNotePositionAndStatus, setActiveCategory]);
 
-  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, boardRef };
+  // 変更後 (After) - useDragOnBoard.ts に追加
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+    setActiveCategory(null);
+  }, [setActiveCategory]);
+
+  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, handleDragCancel, boardRef };
 }

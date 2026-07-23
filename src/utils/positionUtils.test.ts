@@ -18,4 +18,8 @@ describe('positionUtils', () => {
     expect(getQuadrantFromPosition(25, 75)).toBe('risk');
     expect(getQuadrantFromPosition(75, 75)).toBe('request');
   });
+
+  it('returns 0 when container size is 0', () => {
+    expect(pixelsToPercentage(50, 0)).toBe(0);
+  });
 });
