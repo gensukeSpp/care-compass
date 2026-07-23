@@ -11,6 +11,7 @@ interface BoardState {
 	notes: Note[];
 	pendingNotes: Note[];
 	selectedNoteId: string | null;
+	activeCategory: Category | null;
 	containerDimensions: { width: number; height: number };
 	isLoading: boolean;
 	error: string | null;
@@ -19,6 +20,7 @@ interface BoardState {
 	fetchNotes: (profileId: string) => Promise<void>;
 	fetchNoteHistory: (noteId: string) => Promise<void>;
 	selectNote: (id: string | null) => void;
+	setActiveCategory: (category: Category | null) => void;
 	updateNoteContent: (id: string, content: string) => Promise<void>;
 	addNote: (title: string, content: string, category: Category, status: QuadrantId) => Promise<void>;
 	updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
@@ -51,6 +53,7 @@ export const useStore = create<BoardState>()(
 			notes: [],
 			pendingNotes: [],
 			selectedNoteId: null,
+			activeCategory: null,
 			containerDimensions: { width: 1024, height: 768 },
 			isLoading: false,
 			error: null,
@@ -119,6 +122,8 @@ export const useStore = create<BoardState>()(
 					get().fetchNoteHistory(id);
 				}
 			},
+
+			setActiveCategory: (category) => set({ activeCategory: category }),
 
 			setContainerDimensions: (width, height) =>
 				set({ containerDimensions: { width, height } }),

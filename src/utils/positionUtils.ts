@@ -5,6 +5,7 @@ import type { Note, QuadrantId } from '../types';
  * Converts a pixel coordinate to a percentage relative to a container size.
  */
 export const pixelsToPercentage = (pixels: number, containerSize: number): number => {
+  if (containerSize === 0) return 0;
   return (pixels / containerSize) * 100;
 };
 
@@ -13,16 +14,6 @@ export const pixelsToPercentage = (pixels: number, containerSize: number): numbe
  */
 export const percentageToPixels = (percentage: number, containerSize: number): number => {
   return (percentage / 100) * containerSize;
-};
-
-/**
- * Utility to get current viewport dimensions.
- */
-export const getViewportSize = () => {
-  return {
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
-  };
 };
 
 /**
@@ -52,11 +43,6 @@ export const calculateInitialPosition = (quadrant: QuadrantId) => {
 };
 
 export const convertToBoardPercentages = (rect: ClientRect, targetRect: DOMRect) => {
-  // ボード上の%座標に変換
-  // 注意: BoardがViewport全体(0,0)から始まっている前提
-  // const xPct = pixelsToPercentage(rect.left, containerDimensions.width);
-  // const yPct = pixelsToPercentage(rect.top, containerDimensions.height);
-
   // ノートの中心座標（ビューポート基準）
   const noteCenterX = rect.left + rect.width / 2;
   const noteCenterY = rect.top + rect.height / 2;

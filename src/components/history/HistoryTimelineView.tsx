@@ -24,6 +24,7 @@ export function HistoryTimelineView({ history }: HistoryTimelineViewProps) {
     ...pendingNotes.map((n) => n.id),
   ]);
 
+  // 変更後 (After) - 現存付箋の履歴を表示
   history = history.filter((h) => existingNoteIds.has(h.note_id));
 
   if (history.length === 0) {

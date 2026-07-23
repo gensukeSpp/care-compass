@@ -64,6 +64,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Quadrant Customization - Dynamic Display (Issue #65):** Reflect custom labels in board grid and forms.
 - [ ] **Board Settings UI (Issue #66):** Allow owners to update labels and profile names after creation.
 - [x] **History List Page (Issue #70):** Implement a history view page that allows users to see the changes made to sticky notes.
+- [x] **Drag and Drop/Positioning Refinement (Issue #74):** Implemented percentage-based coordinate system, intuitive merge logic based on contact, and responsive UI.
 
 ## 5. Directory Structure
 ```

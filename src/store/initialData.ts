@@ -1,9 +1,9 @@
 import { type Note } from "../types"
 
 export const INITIAL_NOTE: Note[] = [
-  { id: '1', profile_id: '', title: '散歩', category: 'health', status: 'can', content: 'AM11:00に毎日の習慣として', x: 10, y: 10 },
-  { id: '2', profile_id: '', title: '火の管理', category: 'house', status: 'risk', content: 'コンロの消し忘れに注意', x: 10, y: 60 },
-  { id: '3', profile_id: '', title: '買い物', category: 'food', status: 'can', content: '# 今日の様子\n足取りは軽いが、**段差**に注意が必要。', x: 35, y: 20 },
+  { id: '1', profile_id: '', title: '散歩', category: 'health', status: 'can', content: 'AM11:00に毎日の習慣として', x: 10, y: 10 }, // 10%, 10%
+  { id: '2', profile_id: '', title: '火の管理', category: 'house', status: 'risk', content: 'コンロの消し忘れに注意', x: 10, y: 60 }, // 10%, 60%
+  { id: '3', profile_id: '', title: '買い物', category: 'food', status: 'can', content: '# 今日の様子\n足取りは軽いが、**段差**に注意が必要。', x: 35, y: 20 }, // 35%, 20%
 ]
 
 export const INITIAL_PENDING_NOTES: Note[] = [

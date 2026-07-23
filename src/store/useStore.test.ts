@@ -308,9 +308,16 @@ describe('useStore', () => {
     
     const { addNote } = useStore.getState();
     
-    vi.mocked(supabase.from('').insert('').select().single).mockResolvedValue({
-      data: { id: MOCK_NOTE_ID, title: 'Auth Note', authorName: 'Test Author' },
-      error: null
+    // Fix: mock the chain correctly
+    vi.mocked(supabase.from).mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: MOCK_NOTE_ID, title: 'Auth Note', authorName: 'Test Author' },
+            error: null
+          })
+        })
+      })
     } as any);
 
     await addNote('Auth Note', 'Content', 'health', 'can');
