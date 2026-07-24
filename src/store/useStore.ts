@@ -31,9 +31,12 @@ interface BoardState {
 
 	// Add Form
 	isAddFormOpen: boolean;
+	isPendingBoxOpen: boolean;
 	draftContent: string;
 	openAddForm: () => void;
 	closeAddForm: () => void;
+	openPendingBox: () => void;
+	closePendingBox: () => void;
 	setDraftContent: (content: string) => void;
 
 	// Pending
@@ -458,9 +461,12 @@ export const useStore = create<BoardState>()(
 			},
 
 			isAddFormOpen: false,
+			isPendingBoxOpen: false,
 			draftContent: '',
 			openAddForm: () => set({ isAddFormOpen: true }),
 			closeAddForm: () => set({ isAddFormOpen: false, draftContent: '' }),
+			openPendingBox: () => set({ isPendingBoxOpen: true }),
+			closePendingBox: () => set({ isPendingBoxOpen: false }),
 			setDraftContent: (content) => set({ draftContent: content }),
 		}),
 		{
