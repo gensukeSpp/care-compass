@@ -1,13 +1,15 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useStore } from '../../store/useStore';
-import { useDragOnBoard } from '../../hooks/useDragOnBoard';
 import { type Category } from '../../types/index';
 import { StickyNoteView } from './StickyNoteView';
 
 export const StickyNote = ({ id, title, x, y, category }: { id: string, title: string, x: number, y: number, category: Category }) => {
 	const selectNote = useStore((state) => state.selectNote);
 	const activeCategory = useStore((state) => state.activeCategory);
-	const { isCancelled } = useDragOnBoard();
+
+  // useDragOnBoard の別インスタンスから isCancelled を参照しており、合成キャンセル後に付箋の詳細モーダルが開く誤動作が解消されない。
+	// const { isCancelled } = useDragOnBoard();
+	const isMergeCancelled = useStore(state => state.mergeCancelled);
 	
 	const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
 		id,
@@ -30,7 +32,7 @@ export const StickyNote = ({ id, title, x, y, category }: { id: string, title: s
 	};
 
 	const handlePointerUp = () => {
-		if (isCancelled) return;
+		if (isMergeCancelled) return;
 		if (!transform || (Math.abs(transform.x) < 5 && Math.abs(transform.y) < 5)) {
 			selectNote(id);
 		}

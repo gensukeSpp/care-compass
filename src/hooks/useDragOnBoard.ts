@@ -8,10 +8,13 @@ export const useDragOnBoard = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
-  const [isCancelled, setIsCancelled] = useState(false);
+  // ローカル state（useState）で管理しているため、合成キャンセル後に付箋の詳細モーダルが開く誤動作が解消されない。
+  // const [isCancelled, setIsCancelled] = useState(false);
+  const setMergeCancelled = useStore(state => state.setMergeCancelled);
+
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setIsCancelled(false); // リセット
+    setMergeCancelled(false); // リセット
     setActiveId(event.active.id);
     const noteInfo = getActiveNoteInfo(event.active, notes);
     if (noteInfo) {
@@ -33,7 +36,8 @@ export const useDragOnBoard = () => {
     setActiveId(null);
     setActiveCategory(null);
 
-    const rect = active.rect.current.translated;
+    // rect の安全な取得 optional chaining
+    const rect = active.rect?.current?.translated;
     if (!rect) return;
 
     const pos = calculatePosition(rect);
@@ -52,7 +56,7 @@ export const useDragOnBoard = () => {
       if (window.confirm('付箋内容を合成しますか(タイトルは移動先のものになります)？')) {
         mergeNotes(String(active.id), targetNote.id);
       } else {
-        setIsCancelled(true); // キャンセルされたことをフラグで記録
+        setMergeCancelled(true); // キャンセルされたことをフラグで記録
         if (isPending) {
           moveToBoard(String(active.id), pos.x, pos.y);
         } else {
@@ -75,5 +79,5 @@ export const useDragOnBoard = () => {
     setActiveCategory(null);
   }, [setActiveCategory]);
 
-  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, handleDragCancel, boardRef, isCancelled };
+  return { notes, pendingNotes, activeId, handleDragStart, handleDragEnd, handleDragCancel, boardRef, setMergeCancelled };
 }

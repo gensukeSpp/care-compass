@@ -350,4 +350,157 @@ describe('useStore', () => {
     const pendingNotes = useStore.getState().pendingNotes;
     expect(pendingNotes.some(n => (n.google_task_id || n.googleTaskId) === 'task-2')).toBe(true);
   });
+
+  // -------------------------------------------------------
+  // merge キャンセルの振る舞いテスト (issue-77-review #149)
+  // ドラッグ→ドロップ→confirm キャンセル時にモーダルが開かないことの回帰防止
+  // -------------------------------------------------------
+  describe('merge キャンセルの振る舞い', () => {
+    it('mergeCancelled の初期値は false であること', () => {
+      expect(useStore.getState().mergeCancelled).toBe(false);
+    });
+
+    it('setMergeCancelled(true) でフラグが true になること', () => {
+      const { setMergeCancelled } = useStore.getState();
+      setMergeCancelled(true);
+      expect(useStore.getState().mergeCancelled).toBe(true);
+    });
+
+    it('setMergeCancelled(false) でフラグがリセットされること', () => {
+      useStore.setState({ mergeCancelled: true });
+      const { setMergeCancelled } = useStore.getState();
+      setMergeCancelled(false);
+      expect(useStore.getState().mergeCancelled).toBe(false);
+    });
+
+    it('ドラッグ開始時に mergeCancelled が false にリセットされること（useDragOnBoard の handleDragStart 相当）', () => {
+      // 事前にフラグを true に設定（前のキャンセル操作をシミュレート）
+      useStore.setState({ mergeCancelled: true });
+      expect(useStore.getState().mergeCancelled).toBe(true);
+
+      // ドラッグ開始をシミュレート: useDragOnBoard.handleDragStart は
+      // setMergeCancelled(false) を呼び出す
+      useStore.getState().setMergeCancelled(false);
+      expect(useStore.getState().mergeCancelled).toBe(false);
+    });
+
+    it('merge キャンセル後に selectNote が呼ばれた場合でも、StickyNote 側でフラグにより抑制されることの検証フロー', () => {
+      const noteId = '00000000-0000-0000-0000-000000000099';
+      const targetId = '00000000-0000-0000-0000-000000000088';
+
+      // ボード上にノートを配置
+      useStore.setState({
+        notes: [
+          { id: noteId, title: 'Dragged Note', content: 'Drag', x: 10, y: 10, status: 'can', category: 'health', profile_id: MOCK_PROFILE_ID },
+          { id: targetId, title: 'Target Note', content: 'Target', x: 50, y: 50, status: 'can', category: 'health', profile_id: MOCK_PROFILE_ID },
+        ],
+        selectedNoteId: null,
+        mergeCancelled: false,
+      });
+
+      // --- フェーズ 1: ドラッグ開始 ---
+      // handleDragStart でフラグをリセット
+      useStore.getState().setMergeCancelled(false);
+      expect(useStore.getState().mergeCancelled).toBe(false);
+
+      // --- フェーズ 2: confirm でキャンセル ---
+      // handleDragEnd で confirm がキャンセルされた場合
+      useStore.getState().setMergeCancelled(true);
+      expect(useStore.getState().mergeCancelled).toBe(true);
+
+      // --- フェーズ 3: StickyNote の handlePointerUp ---
+      // StickyNote コンポーネントでは以下のようにフラグをチェック:
+      //   if (isMergeCancelled) return;  // selectNote を呼ばない
+      const { mergeCancelled, selectNote } = useStore.getState();
+      if (!mergeCancelled) {
+        selectNote(noteId);
+      }
+
+      // モーダルが開かない（selectedNoteId が null のまま）
+      expect(useStore.getState().selectedNoteId).toBeNull();
+
+      // ノートはボード上にそのまま残っている
+      expect(useStore.getState().notes.length).toBe(2);
+    });
+
+    it('マージが成功した場合は mergeCancelled が false のまま、selectNote が通常動作すること', () => {
+      const noteId = '00000000-0000-0000-0000-000000000099';
+
+      useStore.setState({
+        notes: [
+          { id: noteId, title: 'Note', content: 'Content', x: 10, y: 10, status: 'can', category: 'health', profile_id: MOCK_PROFILE_ID },
+        ],
+        selectedNoteId: null,
+        mergeCancelled: false,
+      });
+
+      // ドラッグ開始 → リセット
+      useStore.getState().setMergeCancelled(false);
+
+      // マージが実行されなかった（通常移動）場合、フラグは false のまま
+      expect(useStore.getState().mergeCancelled).toBe(false);
+
+      // StickyNote の handlePointerUp で selectNote が呼ばれる
+      const { mergeCancelled, selectNote, fetchNoteHistory } = useStore.getState();
+
+      // fetchNoteHistory をモック
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      } as any);
+
+      if (!mergeCancelled) {
+        selectNote(noteId);
+      }
+
+      // モーダルが開く（selectedNoteId が設定される）
+      expect(useStore.getState().selectedNoteId).toBe(noteId);
+    });
+
+    it('連続操作: キャンセル→再ドラッグ→通常ドロップでフラグが正しく切り替わること', () => {
+      const noteId = '00000000-0000-0000-0000-000000000099';
+
+      useStore.setState({
+        notes: [
+          { id: noteId, title: 'Note', content: 'Content', x: 10, y: 10, status: 'can', category: 'health', profile_id: MOCK_PROFILE_ID },
+        ],
+        selectedNoteId: null,
+        mergeCancelled: false,
+      });
+
+      // 1回目: ドラッグ→キャンセル
+      useStore.getState().setMergeCancelled(false); // dragStart
+      useStore.getState().setMergeCancelled(true);  // confirm キャンセル
+      expect(useStore.getState().mergeCancelled).toBe(true);
+
+      // StickyNote 側で抑制 → モーダル開かない
+      const state1 = useStore.getState();
+      if (!state1.mergeCancelled) {
+        state1.selectNote(noteId);
+      }
+      expect(useStore.getState().selectedNoteId).toBeNull();
+
+      // 2回目: 再ドラッグ（フラグリセット）→ 通常ドロップ
+      useStore.getState().setMergeCancelled(false); // dragStart でリセット
+      expect(useStore.getState().mergeCancelled).toBe(false);
+
+      // 通常ドロップ後、selectNote が呼ばれる
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      } as any);
+
+      const state2 = useStore.getState();
+      if (!state2.mergeCancelled) {
+        state2.selectNote(noteId);
+      }
+      expect(useStore.getState().selectedNoteId).toBe(noteId);
+    });
+  });
 });

@@ -5,15 +5,16 @@ import { useFileImport } from '../../hooks/useDropMdFile';
 import { TasksModal } from '../pending/TasksModal';
 
 export const PendingDrawer = () => {
-  const { pendingNotes, selectNote, openPendingBox, closePendingBox } = useStore();
-  const [isOpen, setIsOpen] = useState(false);
+  const { pendingNotes, selectNote } = useStore();
+  // const [isOpen, setIsOpen] = useState(false);
+  // store の isPendingBoxOpen を単一のソースオブトゥルースにする。
+  const isOpen = useStore(state => state.isPendingBoxOpen);
+  const openPendingBox = useStore(state => state.openPendingBox);
+  const closePendingBox = useStore(state => state.closePendingBox);
   const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
   
   const toggleDrawer = () => {
-    const newState = !isOpen;
-    setIsOpen(newState);
-    if (newState) openPendingBox();
-    else closePendingBox();
+    if (isOpen) closePendingBox(); else openPendingBox();
   };
   const { handleDrop } = useFileImport();
 
@@ -41,6 +42,7 @@ export const PendingDrawer = () => {
       >
         {/* 持ち手 (Handle) */}
         <button
+          aria-label="保留ボックスを開閉"
           onClick={toggleDrawer}
           className="w-10 h-24 bg-blue-600 text-white rounded-l-lg self-center flex items-center justify-center hover:bg-blue-700 transition-colors shadow-md"
         >

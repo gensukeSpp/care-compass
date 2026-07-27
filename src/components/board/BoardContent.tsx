@@ -12,7 +12,8 @@ export function BoardContent() {
   // 4. プロファイルが選択されている場合
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <div className={`relative h-full overflow-hidden bg-gray-50 transition-all duration-300 ${isPendingBoxOpen ? 'mr-[320px]' : 'mr-0'}`}>
+      {/* マージンをすべての画面サイズで付与するのではなく、あるブレークポイント以上でのみ適用する */}
+      <div className={`relative h-full overflow-hidden bg-gray-50 transition-all duration-300 ${isPendingBoxOpen ? 'md:mr-[320px] mr-0' : 'mr-0'}`}>
         <AddNoteForm />
         <BoardReference ref={boardRef} />
         <PendingDrawer />
