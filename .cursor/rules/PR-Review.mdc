@@ -3,12 +3,15 @@ description: Pull Requestレビュー依頼時に使用。`git diff main` の差
 alwaysApply: false
 ---
 
-@Terminal(git diff main) 
+@Terminal(gh pr view) @Terminal(git diff main)
 
-上記の差分（Git Diff）を解析し、GitHubのPull Requestレビュー画面のようなフォーマットで、以下の構成に従って日本語でレビュー結果を出力してください。変更箇所の周辺ロジックへの影響も考慮してください。
+上記の「Pull Requestの説明・目的（gh pr view）」と「ソースコードの差分（git diff main）」の2つの情報を深く読み込んでください。
+
+その上で、PRの目的や背景に合致しているかを含め、GitHubのPull Requestレビュー画面のようなフォーマットで、以下の構成に従って日本語でレビュー結果を出力してください。変更箇所の周辺ロジックへの影響も考慮してください。
 
 ### 📋 Pull Request Summary
 - **変更の概要:** （何が変更されたかを1〜2行で簡潔に）
+- **PRの目的との整合性:** （PRの説明に書かれた目的が、コード差分で正しく実現されているか）
 - **影響範囲:** （この変更が影響を与える可能性のあるコンポーネントや機能）
 
 ### 🔍 Code Review Findings
@@ -23,6 +26,8 @@ alwaysApply: false
 
 // 変更後 (After)
 + 
-```
+\```
+
+
 ### 🚀 総合評価
 - （「マージ可能」「要修正」「確認事項」などのステータスと総評）

@@ -65,6 +65,7 @@ This project follows the design and principles outlined in `設計書.md`. Any d
 - [ ] **Board Settings UI (Issue #66):** Allow owners to update labels and profile names after creation.
 - [x] **History List Page (Issue #70):** Implement a history view page that allows users to see the changes made to sticky notes.
 - [x] **Drag and Drop/Positioning Refinement (Issue #74):** Implemented percentage-based coordinate system, intuitive merge logic based on contact, and responsive UI.
+- [x] **UI/UX Refinement (Issue #76):** Fixed merge cancellation behavior and improved mobile/tablet layout responsiveness.
 
 ## 5. Directory Structure
 ```

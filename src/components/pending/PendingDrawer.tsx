@@ -5,9 +5,17 @@ import { useFileImport } from '../../hooks/useDropMdFile';
 import { TasksModal } from '../pending/TasksModal';
 
 export const PendingDrawer = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
   const { pendingNotes, selectNote } = useStore();
+  // const [isOpen, setIsOpen] = useState(false);
+  // store の isPendingBoxOpen を単一のソースオブトゥルースにする。
+  const isOpen = useStore(state => state.isPendingBoxOpen);
+  const openPendingBox = useStore(state => state.openPendingBox);
+  const closePendingBox = useStore(state => state.closePendingBox);
+  const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
+  
+  const toggleDrawer = () => {
+    if (isOpen) closePendingBox(); else openPendingBox();
+  };
   const { handleDrop } = useFileImport();
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -34,7 +42,8 @@ export const PendingDrawer = () => {
       >
         {/* 持ち手 (Handle) */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          aria-label="保留ボックスを開閉"
+          onClick={toggleDrawer}
           className="w-10 h-24 bg-blue-600 text-white rounded-l-lg self-center flex items-center justify-center hover:bg-blue-700 transition-colors shadow-md"
         >
           <span className={`transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>

@@ -31,9 +31,12 @@ interface BoardState {
 
 	// Add Form
 	isAddFormOpen: boolean;
+	isPendingBoxOpen: boolean;
 	draftContent: string;
 	openAddForm: () => void;
 	closeAddForm: () => void;
+	openPendingBox: () => void;
+	closePendingBox: () => void;
 	setDraftContent: (content: string) => void;
 
 	// Pending
@@ -45,6 +48,10 @@ interface BoardState {
 
 	// Tasks
 	syncTasks: () => Promise<void>;
+
+	// Merge Cancelled Flag
+	setMergeCancelled: (cancelled: boolean) => void;
+	mergeCancelled: boolean;
 }
 
 export const useStore = create<BoardState>()(
@@ -458,10 +465,16 @@ export const useStore = create<BoardState>()(
 			},
 
 			isAddFormOpen: false,
+			isPendingBoxOpen: false,
 			draftContent: '',
 			openAddForm: () => set({ isAddFormOpen: true }),
 			closeAddForm: () => set({ isAddFormOpen: false, draftContent: '' }),
+			openPendingBox: () => set({ isPendingBoxOpen: true }),
+			closePendingBox: () => set({ isPendingBoxOpen: false }),
 			setDraftContent: (content) => set({ draftContent: content }),
+			
+			mergeCancelled: false,
+			setMergeCancelled: (cancelled: boolean) => set({ mergeCancelled: cancelled }),
 		}),
 		{
 			name: 'care-board-storage',
