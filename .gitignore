@@ -30,3 +30,11 @@ dist-ssr
 .env
 .dev.vars
 .playwright-mcp/
+
+# 開発、ドキュメントほか
+.cursor/
+.gemini/
+.github/
+docs/
+tasks/
+
